@@ -74,7 +74,7 @@ mod config_tests {
     /// call crates::lcc-uitls::config:;AppConfig::build
     #[test]
     fn test_lc_utils_config_appconfig_build() {
-        let c = lc_utils::config::AppConfig::build("../config/default").unwrap();
+        let c = lc_utils::config::AppConfig::new("../config/default").unwrap();
 
         println!("{:?}", c)
     }

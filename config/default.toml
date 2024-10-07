@@ -3,5 +3,5 @@ name = "lc"
 port = 3000
 
 [database]
-url = "postgres://postgres:password@localhost/test"
+url = "postgres://lius:lsmima@127.0.0.1/ldb"
 max_connections = 5

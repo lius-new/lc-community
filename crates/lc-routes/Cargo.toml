@@ -9,6 +9,7 @@ tokio = { workspace = true }
 serde = { workspace = true }
 lazy_static = { workspace = true }
 anyhow = { workspace = true }
+sqlx = { workspace = true }
 
 lc_utils = { workspace = true }
 lc_services = { workspace = true }

@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 
 lazy_static! {
-    pub static ref AppCon: AppConfig = AppConfig::build("./config/default").unwrap();
+    pub static ref AppCon: AppConfig = AppConfig::new("./config/default").unwrap();
 }
 
 #[derive(Debug, Deserialize)]
@@ -34,7 +34,7 @@ pub struct AppConfig {
 
 impl AppConfig {
     /// 构建AppConfig实例
-    pub fn build(config_name: &str) -> Result<Self, ConfigError> {
+    pub fn new(config_name: &str) -> Result<Self, ConfigError> {
         let config = Config::builder()
             .add_source(config::File::with_name(config_name))
             .add_source(config::File::with_name("./config/production").required(false))

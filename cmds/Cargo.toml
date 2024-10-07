@@ -9,6 +9,7 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 serde = { workspace = true }
+sqlx = { workspace = true }
 
 lc_routes = { workspace = true }
 lc_utils = { workspace = true }
