@@ -1,0 +1,7 @@
+[service]
+name = "lc"
+port = 3000
+
+[database]
+url = "postgres://postgres:password@localhost/test"
+max_connections = 5

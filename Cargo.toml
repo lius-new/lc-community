@@ -7,6 +7,7 @@ members = [
   "crates/lc-services",
   "crates/lc-utils",
   "db",
+  "tests",
 ]
 resolver = "2"
 
@@ -19,7 +20,8 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 lazy_static = "1.5"
 anyhow = "1.0"
+config = "0.14"
 
 lc_utils = { path = "./crates/lc-utils" }
 lc_routes = { path = "./crates/lc-routes" }
-# core_routes = { path = "./crates/routes" }
+lc_services = { path = "./crates/lc-services" }
