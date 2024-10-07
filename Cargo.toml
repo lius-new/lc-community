@@ -1,0 +1,25 @@
+[workspace]
+members = [
+  "bench",
+  "cmds",
+  "crates/lc-domain",
+  "crates/lc-routes",
+  "crates/lc-services",
+  "crates/lc-utils",
+  "db",
+]
+resolver = "2"
+
+[workspace.dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+lazy_static = "1.5"
+anyhow = "1.0"
+
+lc_utils = { path = "./crates/lc-utils" }
+lc_routes = { path = "./crates/lc-routes" }
+# core_routes = { path = "./crates/routes" }
