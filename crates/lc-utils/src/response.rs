@@ -11,6 +11,7 @@ const SUCCESS_CODE: i32 = 1;
 const WARN_CODE: i32 = 1;
 const FAIL_CODE: i32 = -1;
 
+/// 统一响应类型
 pub struct Response<T> {
     pub status_code: StatusCode,
     pub code: i32,
@@ -22,6 +23,7 @@ impl<T> Response<T>
 where
     T: Debug + Serialize,
 {
+    /// 初始化默认响应类型
     pub fn default() -> Self {
         Response {
             status_code: StatusCode::OK,
@@ -30,12 +32,13 @@ where
             message: "".to_string(),
         }
     }
+    /// 操作成功对应的响应类型
     pub fn success(mut self, message: &str) -> Self {
         self.message = message.to_string();
         self.code = SUCCESS_CODE;
         self
     }
-
+    /// 操作失败对应的响应类型
     pub fn fail(mut self, message: &str, err: Error) -> Self {
         if self.message.len() > 0 {
             self.message = format!("{}: {}", message, err.to_string());
@@ -45,28 +48,31 @@ where
         self.code = FAIL_CODE;
         self
     }
-
+    /// 指定响应的状态码，如果不指定就会使用默认的(200)
     pub fn with_status_code(mut self, status_code: StatusCode) -> Self {
         self.status_code = status_code;
         self
     }
-
+    /// 指定响应数据，如果不指定则该数据字段不会出现在json中。
     pub fn with_data(mut self, data: Option<T>) -> Self {
         self.data = data;
         self
     }
+    /// 指定响应信息。
     pub fn with_message(mut self, message: &str) -> Self {
         self.message += message;
         self
     }
 }
 
+// 允许直接打印和to_string
 impl<T> Display for Response<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self)
     }
 }
 
+// 当实现该类型后可以直接将Response<T>作为axum路由处理函数的返回值，会自动调用该trait的into_response方法最终返回json.
 impl<T> IntoResponse for Response<T>
 where
     T: Debug + Serialize,
