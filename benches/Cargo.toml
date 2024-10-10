@@ -1,0 +1,18 @@
+[package]
+name = "benches"
+version = "0.1.0"
+edition = "2021"
+
+[dev-dependencies]
+axum = { workspace = true }
+criterion = { workspace = true }
+axum-test = { workspace = true }
+
+lc_utils = { workspace = true }
+lc_routes = { workspace = true }
+lc_services = { workspace = true }
+
+[[bench]]
+name = "user_login_benchmark"
+path = "src/lc-routes/user_login_benchmark.rs"
+harness = false
