@@ -12,7 +12,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pool = lc_utils::database::init_db().await;
 
-    sqlx::migrate!("../migrations")
+    let create_table_count = std::fs::read_dir("./migrations/creates/")?.count();
+    tracing::info!("create table with count({}) tables", create_table_count);
+
+    //执行表格创建迁移
+    sqlx::migrate!("../migrations/creates")
         .run(pool.get().await)
         .await?;
 
