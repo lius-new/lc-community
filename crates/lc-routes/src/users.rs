@@ -1,9 +1,11 @@
 use axum::{
     http::StatusCode,
+    response::IntoResponse,
     routing::{get, post},
     Router,
 };
-use lc_utils::response::Response;
+use lc_utils::{extract::CustomExtractorJson, response::Response};
+use serde::Serialize;
 
 pub fn build_api_users_router() -> axum::Router {
     Router::new().nest(
@@ -23,8 +25,17 @@ async fn login() -> Response<()> {
         .with_status_code(StatusCode::BAD_REQUEST)
         .success("")
 }
-async fn register() -> Response<()> {
-    Response::default()
+
+#[derive(serde::Deserialize, Serialize, Debug)]
+pub struct Register {
+    pub nickname: String,
+    pub password: String,
+}
+
+async fn register(CustomExtractorJson(body): CustomExtractorJson<Register>) -> impl IntoResponse {
+    println!("{:?}", body);
+
+    Response::<()>::default()
         .with_status_code(StatusCode::BAD_REQUEST)
         .success("")
 }

@@ -12,8 +12,9 @@ const WARN_CODE: i32 = 1;
 const FAIL_CODE: i32 = -1;
 
 /// 统一响应类型
+#[derive(Debug, serde::Serialize)]
 pub struct Response<T> {
-    pub status_code: StatusCode,
+    pub status_code: u16,
     pub code: i32,
     pub data: Option<T>,
     pub message: String,
@@ -26,7 +27,7 @@ where
     /// 初始化默认响应类型
     pub fn default() -> Self {
         Response {
-            status_code: StatusCode::OK,
+            status_code: 200,
             code: WARN_CODE,
             data: None,
             message: "".to_string(),
@@ -48,9 +49,10 @@ where
         self.code = FAIL_CODE;
         self
     }
+
     /// 指定响应的状态码，如果不指定就会使用默认的(200)
     pub fn with_status_code(mut self, status_code: StatusCode) -> Self {
-        self.status_code = status_code;
+        self.status_code = status_code.into();
         self
     }
     /// 指定响应数据，如果不指定则该数据字段不会出现在json中。
@@ -85,6 +87,9 @@ where
                 json!({ "code": self.code,"message": self.message.to_string(),"data": data});
         }
 
-        (self.status_code, Json(content_json)).into_response()
+        match StatusCode::from_u16(self.status_code) {
+            Ok(s) => (s, Json(content_json)).into_response(),
+            Err(_) => (StatusCode::BAD_REQUEST, Json(content_json)).into_response(),
+        }
     }
 }
