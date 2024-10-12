@@ -1080,8 +1080,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "lc_domain"
+name = "lc-models"
 version = "0.1.0"
+
+[[package]]
+name = "lc_dto"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "lc_routes"
@@ -1090,6 +1097,7 @@ dependencies = [
  "anyhow",
  "axum",
  "lazy_static",
+ "lc_dto",
  "lc_services",
  "lc_utils",
  "serde",
@@ -1103,7 +1111,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "lc_dto",
  "lc_utils",
+ "sqlx",
  "tokio",
 ]
 

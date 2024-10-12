@@ -40,12 +40,14 @@ where
         self
     }
     /// 操作失败对应的响应类型
-    pub fn fail(mut self, message: &str, err: Error) -> Self {
-        if self.message.len() > 0 {
-            self.message = format!("{}: {}", message, err.to_string());
+    pub fn fail(mut self, message: &str, err: Option<Error>) -> Self {
+        let err = err.map_or("".to_string(), |e| e.to_string());
+
+        self.message = if !err.is_empty() {
+            format!("{}: {}", message, err)
         } else {
-            self.message = err.to_string()
-        }
+            message.to_string()
+        };
         self.code = FAIL_CODE;
         self
     }
@@ -90,6 +92,21 @@ where
         match StatusCode::from_u16(self.status_code) {
             Ok(s) => (s, Json(content_json)).into_response(),
             Err(_) => (StatusCode::BAD_REQUEST, Json(content_json)).into_response(),
+        }
+    }
+}
+
+impl<T> From<anyhow::Result<T>> for Response<T>
+where
+    T: Debug + Serialize,
+{
+    fn from(value: anyhow::Result<T>) -> Self {
+        //let  Response { status_code:_, code, data:_, message } = Response::default();
+        //let mut content_json = json!({"code": code, "message":message });
+
+        match value {
+            Ok(s) => Self::default().with_data(Some(s)),
+            Err(e) => Self::default().fail("", Some(e)),
         }
     }
 }

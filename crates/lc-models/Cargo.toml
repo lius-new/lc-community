@@ -1,5 +1,5 @@
 [package]
-name = "lc_domain"
+name = "lc-models"
 version = "0.1.0"
 edition = "2021"
 

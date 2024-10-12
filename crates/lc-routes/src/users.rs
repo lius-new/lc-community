@@ -1,17 +1,12 @@
-use axum::{
-    http::StatusCode,
-    response::IntoResponse,
-    routing::{get, post},
-    Router,
-};
-use lc_utils::{extract::CustomExtractorJson, response::Response};
-use serde::Serialize;
+use axum::{http::StatusCode, routing::post, Router};
+use lc_dto::users::{LoginRequestParam, RegisterRequestParam};
+use lc_utils::{extract::Json, response::Response};
 
 pub fn build_api_users_router() -> axum::Router {
     Router::new().nest(
         "/users",
         Router::new()
-            .route("/login", get(login))
+            .route("/login", post(login))
             .route("/register", post(register))
             .route("/logout", post(logout))
             .route("/profile", post(profile))
@@ -20,20 +15,12 @@ pub fn build_api_users_router() -> axum::Router {
     )
 }
 
-async fn login() -> Response<()> {
-    Response::default()
-        .with_status_code(StatusCode::BAD_REQUEST)
-        .success("")
+async fn login(Json(payload): Json<LoginRequestParam>) -> Response<LoginRequestParam> {
+    lc_services::users::login(payload).await.into()
 }
 
-#[derive(serde::Deserialize, Serialize, Debug)]
-pub struct Register {
-    pub nickname: String,
-    pub password: String,
-}
-
-async fn register(CustomExtractorJson(body): CustomExtractorJson<Register>) -> impl IntoResponse {
-    println!("{:?}", body);
+async fn register(Json(payload): Json<RegisterRequestParam>) -> Response<()> {
+    println!("{:?}", payload);
 
     Response::<()>::default()
         .with_status_code(StatusCode::BAD_REQUEST)

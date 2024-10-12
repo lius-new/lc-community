@@ -7,5 +7,7 @@ edition = "2021"
 anyhow = { workspace = true }
 axum = { workspace = true }
 tokio = { workspace = true }
+sqlx = { workspace = true }
 
 lc_utils = { workspace = true }
+lc_dto = { workspace = true }

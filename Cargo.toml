@@ -1,8 +1,7 @@
 [workspace]
 members = [
   "benches",
-  "cmds",
-  "crates/lc-domain",
+  "cmds", "crates/lc-dto", "crates/lc-models",
   "crates/lc-routes",
   "crates/lc-services",
   "crates/lc-utils",
@@ -31,5 +30,7 @@ criterion = { version = "0.4", features = [
 axum-test = "16.0"
 
 lc_utils = { path = "./crates/lc-utils" }
+lc_dto = { path = "./crates/lc-dto" }
+lc_models = { path = "./crates/lc-models" }
 lc_routes = { path = "./crates/lc-routes" }
 lc_services = { path = "./crates/lc-services" }

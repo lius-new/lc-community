@@ -1,4 +1,5 @@
-use crate::config::AppCon;
+use crate::{config::AppCon, errors::AppError};
+use anyhow::Result;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::sync::Arc;
 use tokio::sync::OnceCell;
@@ -20,6 +21,14 @@ pub async fn init_db() -> &'static Arc<Database> {
         Arc::new(database)
     })
     .await
+}
+
+/// 从DB连接池对象中获取连接。
+pub async fn get_connection() -> Result<&'static Pool<Postgres>> {
+    match DB.get() {
+        Some(db) => Ok(db.get().await),
+        None => Err(AppError::from("get connect failed !").into()),
+    }
 }
 
 #[allow(dead_code)]
