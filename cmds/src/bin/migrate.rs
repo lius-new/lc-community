@@ -1,3 +1,5 @@
+use sqlx::migrate::Migrator;
+use std::path::Path;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 /// support migrate step:
@@ -12,13 +14,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pool = lc_utils::database::init_db().await;
 
-    let create_table_count = std::fs::read_dir("./migrations/creates/")?.count();
+    let create_table_count = std::fs::read_dir("./migrations/")?.count();
     tracing::info!("create table with count({}) tables", create_table_count);
 
     //执行表格创建迁移
-    sqlx::migrate!("../migrations/creates")
-        .run(pool.get().await)
-        .await?;
+
+    //command::migrate(AppCon.database.migrate.current.as_ref(), pool.get().await).await;
+    let sqls_path = "./migrations";
+    let m = Migrator::new(Path::new(sqls_path))
+        .await
+        .expect(format!("{:?} is not exist!", Path::new(sqls_path)).as_str());
+
+    m.run(pool.get().await).await.unwrap();
+
+    println!("{}", lc_utils::uuid());
 
     Ok(())
 }

@@ -5,9 +5,9 @@ create table user_groups
     id              serial
         constraint user_groups_pk
             primary key,
-    name            varchar(24)                    not null,
+    name            varchar(52)                    not null,
     description     varchar(256)                   not null,
-    parent_group_id int                            not null,
+    parent_group_id int                            ,
     created_at      time default current_timestamp not null,
     updated_at      time,
     deleted_at      time,

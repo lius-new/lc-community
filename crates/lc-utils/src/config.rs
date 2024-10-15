@@ -7,7 +7,6 @@ lazy_static! {
 }
 
 #[derive(Debug, Deserialize)]
-#[allow(dead_code)]
 pub struct Service {
     /// 应用名称
     pub name: String,
@@ -15,7 +14,6 @@ pub struct Service {
     pub port: u32,
 }
 #[derive(Debug, Deserialize)]
-#[allow(dead_code)]
 pub struct Database {
     /// 数据库地址
     pub url: String,

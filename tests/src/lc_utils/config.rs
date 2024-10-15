@@ -31,19 +31,19 @@ mod config_tests {
     ///
     /// config content:
     /// ```
-    /// [app]
+    /// [service]
     /// name = "lc"
     /// port = 3000
     ///
     /// [database]
-    /// url = "postgres://postgres:password@localhost/test"
+    /// url = "postgres://lius:lsmima@127.0.0.1/lcdb"
     /// max_connections = 5
     /// ````
     #[test]
     fn test_load_struct_config() {
         #[derive(Debug, Deserialize)]
         #[allow(dead_code)]
-        struct App {
+        struct Service {
             name: String,
             port: u32,
         }
@@ -56,7 +56,7 @@ mod config_tests {
         #[derive(Debug, Deserialize)]
         #[allow(dead_code)]
         struct Config_ {
-            app: App,
+            pub service: Service,
             database: Database,
         }
 

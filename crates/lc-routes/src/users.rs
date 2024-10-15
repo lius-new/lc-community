@@ -20,11 +20,8 @@ async fn login(Json(payload): Json<LoginRequestParam>) -> Response<LoginRequestP
 }
 
 async fn register(Json(payload): Json<RegisterRequestParam>) -> Response<()> {
-    println!("{:?}", payload);
+    lc_services::users::register(payload).await.into()
 
-    Response::<()>::default()
-        .with_status_code(StatusCode::BAD_REQUEST)
-        .success("")
 }
 async fn logout() -> Response<()> {
     Response::default()

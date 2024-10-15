@@ -5,7 +5,7 @@ create table user_resources
     id          serial
         constraint user_resources_pk
             primary key,
-    name        varchar(24)                    not null,
+    name        varchar(36)                    not null,
     description varchar(48)                    not null,
     resource    varchar(72)                    not null,
     can_use     bool default true,

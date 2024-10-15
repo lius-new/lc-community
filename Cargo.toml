@@ -28,6 +28,8 @@ criterion = { version = "0.4", features = [
   "async_tokio",
 ] }
 axum-test = "16.0"
+uuid = {version = "1", features = ["v4", "fast-rng", "macro-diagnostics", ]}
+argon2 = "0.5"
 
 lc_utils = { path = "./crates/lc-utils" }
 lc_dto = { path = "./crates/lc-dto" }
