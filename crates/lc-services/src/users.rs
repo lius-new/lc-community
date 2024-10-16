@@ -1,18 +1,22 @@
-use anyhow::{Ok, Result};
+use anyhow::{anyhow, Context, Ok, Result};
 use lc_dto::users::{LoginRequestParam, RegisterRequestParam};
-use lc_utils::database;
+use lc_utils::{database, verify_password};
 
-pub async fn login(payload: LoginRequestParam) -> Result<LoginRequestParam> {
+pub async fn login(payload: LoginRequestParam) -> Result<String> {
     let pool = database::get_connection().await?;
 
-    let row: (i64,) = sqlx::query_as("SELECT ")
-        .bind(150_i64)
-        .fetch_one(pool)
-        .await?;
+    let user: lc_models::users::UserInfoWithLogin =
+        sqlx::query_as("select nickname,password from user_infos where nickname = $1")
+            .bind(&payload.nickname)
+            .fetch_one(pool)
+            .await
+            .context("用户不存在")?;
 
-    println!("{:?}", row);
+    if !verify_password(&payload.password.as_bytes(), &user.password) {
+        return Err(anyhow!("用户密码错误!"));
+    }
 
-    Ok(payload)
+    Ok("token ...".to_string())
 }
 
 pub async fn register(payload: RegisterRequestParam) -> Result<()> {
@@ -33,7 +37,8 @@ pub async fn register(payload: RegisterRequestParam) -> Result<()> {
         .bind(password)
         .bind(&uuid)
         .execute(&mut *tx)
-        .await?;
+        .await
+        .context("用户已经存在")?;
 
     sqlx::query("INSERT INTO user_group_relations(uuid, user_group_id) VALUES ($1, $2);")
         .bind(&uuid)
@@ -42,6 +47,7 @@ pub async fn register(payload: RegisterRequestParam) -> Result<()> {
         .await?;
 
     tx.commit().await?;
+
     Ok(())
 }
 pub async fn logout() -> Result<()> {

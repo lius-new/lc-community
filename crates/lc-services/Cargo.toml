@@ -11,3 +11,4 @@ sqlx = { workspace = true }
 
 lc_utils = { workspace = true }
 lc_dto = { workspace = true }
+lc_models = { workspace = true }

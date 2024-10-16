@@ -1101,14 +1101,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "lc-models"
-version = "0.1.0"
-
-[[package]]
 name = "lc_dto"
 version = "0.1.0"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "lc_models"
+version = "0.1.0"
+dependencies = [
+ "sqlx",
 ]
 
 [[package]]
@@ -1133,6 +1136,7 @@ dependencies = [
  "anyhow",
  "axum",
  "lc_dto",
+ "lc_models",
  "lc_utils",
  "sqlx",
  "tokio",
