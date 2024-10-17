@@ -1,7 +1,7 @@
 [workspace]
 members = [
   "benches",
-  "cmds", "crates/lc-dto", "crates/lc-models",
+  "cmds", "crates/lc-dto", "crates/lc-middlewares", "crates/lc-models",
   "crates/lc-routes",
   "crates/lc-services",
   "crates/lc-utils",
@@ -20,6 +20,11 @@ lazy_static = "1.5"
 anyhow = "1.0"
 config = "0.14"
 sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "migrate"] }
+uuid = {version = "1", features = ["v4", "fast-rng", "macro-diagnostics", ]}
+argon2 = "0.5"
+jwt = "0.16"
+hmac = { version = "0.12", features = ["reset"] }
+sha2 = "0.10"
 
 # dev dependencies
 criterion = { version = "0.4", features = [
@@ -28,11 +33,10 @@ criterion = { version = "0.4", features = [
   "async_tokio",
 ] }
 axum-test = "16.0"
-uuid = {version = "1", features = ["v4", "fast-rng", "macro-diagnostics", ]}
-argon2 = "0.5"
 
 lc_utils = { path = "./crates/lc-utils" }
 lc_dto = { path = "./crates/lc-dto" }
 lc_models = { path = "./crates/lc-models" }
 lc_routes = { path = "./crates/lc-routes" }
 lc_services = { path = "./crates/lc-services" }
+lc_middlewares = { path = "./crates/lc-middlewares" }

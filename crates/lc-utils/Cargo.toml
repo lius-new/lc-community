@@ -14,3 +14,6 @@ config = { workspace = true }
 sqlx = { workspace = true }
 uuid = { workspace = true }
 argon2 = { workspace = true }
+jwt = { workspace = true }
+hmac = { workspace = true }
+sha2 = { workspace = true }

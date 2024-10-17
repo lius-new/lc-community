@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use axum::{http::StatusCode, routing::post, Router};
 use lc_dto::users::{LoginRequestParam, RegisterRequestParam};
 use lc_utils::{extract::Json, response::Response};
@@ -16,9 +18,13 @@ pub fn build_api_users_router() -> axum::Router {
     )
 }
 
-async fn login(Json(payload): Json<LoginRequestParam>) -> Response<String> {
+async fn login(Json(payload): Json<LoginRequestParam>) -> Response<HashMap<String, String>> {
     match lc_services::users::login(payload).await {
-        Ok(s) => Response::default().success("用户登陆成功", Some(s)),
+        Ok(s) => {
+            let mut map = HashMap::new();
+            map.insert("token".to_string(), s);
+            Response::default().success("用户登陆成功", Some(map))
+        }
         Err(e) => Response::default().fail("用户登陆失败", Some(e)),
     }
 }

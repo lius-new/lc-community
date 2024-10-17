@@ -12,5 +12,6 @@ anyhow = { workspace = true }
 sqlx = { workspace = true }
 
 lc_utils = { workspace = true }
-lc_dto = {workspace = true}
+lc_dto = { workspace = true }
 lc_services = { workspace = true }
+lc_middlewares = { workspace = true }

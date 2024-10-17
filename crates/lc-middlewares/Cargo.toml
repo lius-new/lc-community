@@ -1,0 +1,9 @@
+[package]
+name = "lc_middlewares"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { workspace = true, features = ["http1"] }
+anyhow = { workspace = true }
+lc_utils = { workspace = true }

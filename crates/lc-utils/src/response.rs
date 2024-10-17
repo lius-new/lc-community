@@ -22,7 +22,7 @@ pub struct Response<T> {
 
 impl<T> Response<T>
 where
-    T: Debug + Serialize,
+    T: Debug,
 {
     /// 初始化默认响应类型
     pub fn default() -> Self {

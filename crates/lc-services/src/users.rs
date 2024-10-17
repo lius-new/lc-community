@@ -1,22 +1,27 @@
 use anyhow::{anyhow, Context, Ok, Result};
 use lc_dto::users::{LoginRequestParam, RegisterRequestParam};
-use lc_utils::{database, verify_password};
+use lc_utils::database;
+use tokio::time::Instant;
 
 pub async fn login(payload: LoginRequestParam) -> Result<String> {
     let pool = database::get_connection().await?;
 
     let user: lc_models::users::UserInfoWithLogin =
-        sqlx::query_as("select nickname,password from user_infos where nickname = $1")
+        sqlx::query_as("select password,uuid from user_infos where nickname = $1")
             .bind(&payload.nickname)
             .fetch_one(pool)
             .await
             .context("用户不存在")?;
 
-    if !verify_password(&payload.password.as_bytes(), &user.password) {
+    // TODO: instant 区域代码执行慢。
+    let now = Instant::now();
+    if !lc_utils::verify_password(&payload.password.as_bytes(), &user.password) {
         return Err(anyhow!("用户密码错误!"));
     }
 
-    Ok("token ...".to_string())
+    let token_str = lc_utils::sign_with_value(&user.uuid)?;
+    println!("{:?}",now.elapsed());
+    Ok(token_str.to_string())
 }
 
 pub async fn register(payload: RegisterRequestParam) -> Result<()> {
