@@ -25,3 +25,28 @@ fn test_verify_sign_with_token() {
 
     println!("{:?} {:?}", token_str, ok)
 }
+
+#[test]
+fn test_generate_rsa_keys() {
+    let (pri, pubk) = lc_utils::generate_rsa_keys().unwrap();
+
+    println!("{:?} {:?}", pri, pubk)
+}
+
+#[test]
+fn test_encrypt_uuid() {
+    let (_, pubk) = lc_utils::generate_rsa_keys().unwrap();
+
+    let res = lc_utils::encrypt_uuid("abc", &pubk);
+    println!("{:?} ", res,)
+}
+#[test]
+fn test_decrypt_uuid() {
+    let (private_key, pubk) = lc_utils::generate_rsa_keys().unwrap();
+
+    let encrypted = lc_utils::encrypt_uuid("abc", &pubk).unwrap();
+    println!(" encrypted: {:?} ", encrypted);
+
+    let value = lc_utils::decrypt_uuid(&encrypted, &private_key);
+    println!("value: {:?} ", value,);
+}

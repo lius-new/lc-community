@@ -1,14 +1,14 @@
-use std::collections::BTreeMap;
-
 use anyhow::{anyhow, Result};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2, PasswordHash, PasswordVerifier,
 };
 use hmac::{Hmac, Mac};
-use jwt::{Header, SignWithKey, Token, VerifyWithKey};
+use jwt::{Header, RegisteredClaims, SignWithKey, Token, VerifyWithKey};
 use lazy_static::lazy_static;
+use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey};
 use sha2::Sha256;
+use std::time::{self};
 
 pub mod config;
 pub mod database;
@@ -17,8 +17,10 @@ pub mod extract;
 pub mod response;
 
 lazy_static! {
-    pub static ref SECRETY_KEY: Hmac<Sha256> =
-        Hmac::new_from_slice(b"some-simple-secret-ls").unwrap();
+    /// 构建token时的密钥对
+    pub static ref SECRETY_KEY: Hmac<Sha256> = Hmac::new_from_slice(b"some-simple-secret-ls").unwrap();
+    /// 对uuid加密的 rsp 密钥. (私钥(用于解密)、公钥(用于解密))
+    pub static ref RSA_KEY_WITH_UUID: (RsaPrivateKey,RsaPublicKey) = generate_rsa_keys().unwrap();
 }
 
 /// 生成uuid
@@ -52,15 +54,29 @@ pub fn verify_password(password: &[u8], password_hash: &str) -> bool {
 
 /// 发布签名(token)
 /// params:
-/// - v: 需要被签名的value
+/// - v: 需要被签名的value (通常是uuid)
 pub fn sign_with_value(v: &str) -> Result<String> {
     let header = Header {
         algorithm: jwt::AlgorithmType::Hs256,
         ..Default::default()
     };
 
-    let mut claims = BTreeMap::new();
-    claims.insert("_key", v);
+    let now = time::SystemTime::now()
+        .duration_since(time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+
+    let encrypt_uuid = encrypt_uuid(v, &RSA_KEY_WITH_UUID.1)?;
+
+    let claims = RegisteredClaims {
+        issuer: Some("your-issuer".to_string()),
+        subject: Some("user123".to_string()),
+        audience: Some("your-audience".to_string()),
+        expiration: Some((now + 3600 * 1000 * 12) as u64), // 1小时后过期
+        not_before: Some(now as u64),
+        issued_at: Some(now as u64),
+        json_web_token_id: Some(encrypt_uuid),
+    };
 
     let token = Token::new(header, claims)
         .sign_with_key(&*SECRETY_KEY)
@@ -69,14 +85,53 @@ pub fn sign_with_value(v: &str) -> Result<String> {
     Ok(token.into())
 }
 
+/// 判断是否超过时间
+pub fn out_expiration(expiration: Option<u64>) -> bool {
+    let now = time::SystemTime::now()
+        .duration_since(time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as i64;
+
+    expiration.map_or_else(|| false, |exp| (exp as i64 - now) < 0)
+}
+
 /// 校验签名(token)
 /// params:
 /// - token_str: 签名
 pub fn verify_sign_with_token(token_str: &str) -> Result<(String, bool)> {
-    let claims: BTreeMap<String, String> = token_str.verify_with_key(&*SECRETY_KEY)?;
+    let token: Token<Header, RegisteredClaims, _> = token_str.verify_with_key(&*SECRETY_KEY)?;
+    let claims = token.claims();
 
-    match claims.get("_key") {
-        Some(v) => Ok((v.to_string(), true)),
-        None => Ok(("".to_string(), false)),
+    if out_expiration(claims.expiration) {
+        return Ok(("".to_string(), false));
     }
+
+    match &claims.json_web_token_id {
+        Some(encrypted_uuid) => Ok((decrypt_uuid(encrypted_uuid, &RSA_KEY_WITH_UUID.0)?, true)),
+        _ => Ok(("".to_string(), false)),
+    }
+}
+
+/// 生成rsa密钥对
+pub fn generate_rsa_keys() -> Result<(RsaPrivateKey, RsaPublicKey)> {
+    let mut rng = OsRng;
+    let bits = 2024;
+    let priv_key = RsaPrivateKey::new(&mut rng, bits)?;
+    let pub_key = RsaPublicKey::from(&priv_key);
+
+    Ok((priv_key, pub_key))
+}
+
+/// 对uuid进行加密
+pub fn encrypt_uuid(uuid: &str, public_key: &RsaPublicKey) -> Result<String> {
+    let encrypted = public_key.encrypt(&mut OsRng, Pkcs1v15Encrypt, uuid.as_bytes())?;
+
+    Ok(base64::encode(&encrypted))
+}
+
+/// 对uuid进行解密
+pub fn decrypt_uuid(encrypted: &str, private_key: &RsaPrivateKey) -> Result<String> {
+    let decrypted = private_key.decrypt(Pkcs1v15Encrypt, &base64::decode(encrypted)?)?;
+
+    Ok(String::from_utf8(decrypted)?)
 }

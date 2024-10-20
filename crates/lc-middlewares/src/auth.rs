@@ -32,7 +32,12 @@ pub async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> 
 
     // 对token进行解析获取包含在token中的用户的uuid字符串。
     let uuid = match verify_sign_with_token(token_str) {
-        Ok(data) => data.0,
+        Ok(data) => {
+            if !data.1 {
+                return Err(StatusCode::UNAUTHORIZED);
+            }
+            data.0
+        }
         Err(_) => return Err(StatusCode::UNAUTHORIZED),
     };
 
