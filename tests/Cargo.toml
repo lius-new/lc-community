@@ -6,5 +6,7 @@ edition = "2021"
 [dependencies]
 config = { workspace = true }
 serde = { workspace = true }
+tokio = { workspace = true }
 
 lc_utils = { workspace = true }
+lc_services = { workspace = true }

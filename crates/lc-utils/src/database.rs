@@ -1,4 +1,4 @@
-use crate::{config::AppCon, errors::AppError};
+use crate::errors::AppError;
 use anyhow::Result;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::sync::Arc;
@@ -8,16 +8,9 @@ use tokio::sync::OnceCell;
 pub static DB: OnceCell<Arc<Database>> = OnceCell::const_new();
 
 /// 数据库连接对象初始化
-pub async fn init_db() -> &'static Arc<Database> {
-    let (database_url, database_max_connections) = (
-        AppCon.database.url.as_str(),
-        AppCon.database.max_connections,
-    );
-
+pub async fn init_db(url: &str, max_connections: u32) -> &'static Arc<Database> {
     DB.get_or_init(|| async {
-        let database = Database::new(database_url, database_max_connections)
-            .await
-            .unwrap();
+        let database = Database::new(url, max_connections).await.unwrap();
         Arc::new(database)
     })
     .await

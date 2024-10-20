@@ -1,4 +1,4 @@
-use axum::{middleware, routing::post, Router};
+use axum::{middleware, routing::post, Extension, Router};
 
 pub fn build_api_articles_router() -> axum::Router {
     Router::new()
@@ -6,10 +6,12 @@ pub fn build_api_articles_router() -> axum::Router {
             "/articles",
             Router::new().route(
                 "/list",
-                post(|| async {
-                    lc_utils::response::Response::default().success("message", Some(()))
-                }),
+                post(
+                    |ext: Extension<lc_middlewares::auth::CurrentUser>| async move {
+                        lc_utils::response::Response::default().success("message", Some(()))
+                    },
+                ),
             ),
         )
-        .route_layer(middleware::from_fn(lc_middlewares::auth))
+        .route_layer(middleware::from_fn(lc_middlewares::auth::auth))
 }

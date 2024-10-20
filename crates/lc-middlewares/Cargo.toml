@@ -6,4 +6,6 @@ edition = "2021"
 [dependencies]
 axum = { workspace = true, features = ["http1"] }
 anyhow = { workspace = true }
+
 lc_utils = { workspace = true }
+lc_services = { workspace = true }

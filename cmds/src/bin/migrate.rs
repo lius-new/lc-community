@@ -1,3 +1,4 @@
+use lc_utils::config::AppCon;
 use sqlx::migrate::Migrator;
 use std::path::Path;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
@@ -12,7 +13,11 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::registry().with(fmt::layer()).init();
 
-    let pool = lc_utils::database::init_db().await;
+    let (database_url, database_max_connections) = (
+        AppCon.database.url.as_str(),
+        AppCon.database.max_connections,
+    );
+    let pool = lc_utils::database::init_db(database_url, database_max_connections).await;
 
     let create_table_count = std::fs::read_dir("./migrations/")?.count();
     tracing::info!("create table with count({}) tables", create_table_count);

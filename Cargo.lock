@@ -1134,6 +1134,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "lc_services",
  "lc_utils",
 ]
 
@@ -2276,8 +2277,10 @@ name = "tests"
 version = "0.1.0"
 dependencies = [
  "config",
+ "lc_services",
  "lc_utils",
  "serde",
+ "tokio",
 ]
 
 [[package]]

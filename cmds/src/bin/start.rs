@@ -11,7 +11,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let server_url = format!("127.0.0.1:{}", AppCon.service.port);
 
-    lc_utils::database::init_db().await;
+    let (database_url, database_max_connections) = (
+        AppCon.database.url.as_str(),
+        AppCon.database.max_connections,
+    );
+    lc_utils::database::init_db(database_url, database_max_connections).await;
 
     let app = lc_routes::build_api_root_router();
     let listener = tokio::net::TcpListener::bind(server_url.as_str()).await?;
