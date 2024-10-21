@@ -6,12 +6,33 @@ use tokio::time::Instant;
 pub async fn login(payload: LoginRequestParam) -> Result<String> {
     let pool = database::get_connection().await?;
 
+    let mut tx = pool.begin().await?;
+
     let user: lc_models::users::UserInfoWithLogin =
         sqlx::query_as("select password,uuid from user_infos where nickname = $1")
             .bind(&payload.nickname)
-            .fetch_one(pool)
+            .fetch_one(&mut *tx)
             .await
             .context("用户不存在")?;
+
+    let row = sqlx::query("select id from user_login_infos where uuid = $1;")
+        .bind(&user.uuid)
+        .execute(&mut *tx)
+        .await?;
+
+    let sql_str = if row.rows_affected() > 0 {
+        "update user_login_infos set login_created_time = now() where uuid = $1;"
+    } else {
+        "insert into user_login_infos(uuid)  values ($1);"
+    };
+
+    sqlx::query(sql_str)
+        .bind(&user.uuid)
+        .execute(&mut *tx)
+        .await
+        .context("用户不存在")?;
+
+    tx.commit().await?; // 提交事务
 
     // TODO: instant 区域代码执行慢。
     let now = Instant::now();
@@ -20,7 +41,7 @@ pub async fn login(payload: LoginRequestParam) -> Result<String> {
     }
 
     let token_str = lc_utils::sign_with_value(&user.uuid)?;
-    println!("{:?}",now.elapsed());
+    println!("{:?}", now.elapsed());
     Ok(token_str.to_string())
 }
 

@@ -7,9 +7,9 @@ create table article_tags
             primary key,
     name        varchar(24)                    not null,
     description varchar(256)                   not null,
-    created_at  time default current_timestamp not null,
-    updated_at  time,
-    deleted_at  time
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp 
 );
 comment on table article_tags is '文章标签表';
 comment on column article_tags.name is '文章标签名称';

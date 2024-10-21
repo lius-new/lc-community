@@ -9,9 +9,9 @@ create table user_resources
     description varchar(48)                    not null,
     resource    varchar(72)                    not null,
     can_use     bool default true,
-    created_at  time default current_timestamp not null,
-    updated_at  time,
-    deleted_at  time
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp
 );
 comment on table user_resources is '用户资源表';
 comment on column user_resources.name is '用户资源名称';

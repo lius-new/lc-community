@@ -6,13 +6,10 @@ values (1, 'ROOT_PERMISSION', '最高权限.(拥有最高权限)');
 
 insert into user_permissions(id, name, description, parent_permission_id)
 values (2, 'USER_ADMIN_PERMISSION', '管理角色.(该角色拥有最高管理用户权限)', 1);
-
 insert into user_permissions(id, name, description, parent_permission_id)
 values (3, 'USER_ADMIN_WRITE_PERMISSION', '拥有编辑用户数据权限', 2);
-
 insert into user_permissions(id, name, description, parent_permission_id)
 values (4, 'USER_ADMIN_READ_PERMISSION', '拥有查看用户权限', 2);
-
 insert into user_permissions(id, name, description, parent_permission_id)
 values (5, 'USER_PERMISSION', '拥有普通用户权限', 4);
 

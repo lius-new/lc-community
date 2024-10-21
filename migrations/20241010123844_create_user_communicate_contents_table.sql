@@ -5,9 +5,9 @@ create table user_communicate_contents
     id                          serial
         constraint user_communicate_contents_pk
             primary key,
-    created_at                  time default current_timestamp not null,
-    updated_at                  time,
-    deleted_at                  time,
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp,
 
     u1_send_content             varchar(256)                   not null,
     u2_send_content             varchar(256)                   not null,

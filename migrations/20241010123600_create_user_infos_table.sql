@@ -10,9 +10,9 @@ create table user_infos
     email      varchar(32),
     phone      varchar(18),
     gender     boolean,
-    created_at time default current_timestamp not null,
-    updated_at time,
-    deleted_at time,
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp,
     uuid       varchar(64) unique             not null,
     constraint uuid_foreign foreign key (uuid) references users (uuid)
 );

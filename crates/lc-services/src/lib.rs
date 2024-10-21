@@ -1,4 +1,4 @@
-use anyhow::{Context, Ok, Result};
+use anyhow::{Context, Result};
 use lc_utils::database;
 
 pub mod users;
@@ -64,9 +64,22 @@ pub async fn auth(uuid: &str, resource: &str, resource_method: &str) -> Result<b
         .await
         .context("权限查询失败")?;
 
-    if row.rows_affected() > 0 {
-        Ok(true)
-    } else {
-        Ok(false)
+    Ok(row.rows_affected() > 0)
+}
+
+pub async fn is_white_resource(resource: &str, resource_method: &str) -> Result<bool> {
+    let pool = database::get_connection().await?;
+
+    let result = sqlx::query(
+        "select id from white_resources where resource = $1 and method = $2 and can_use = true;",
+    )
+    .bind(resource)
+    .bind(resource_method)
+    .execute(pool)
+    .await;
+
+    match result {
+        Ok(row) => Ok(row.rows_affected() > 0),
+        Err(_) => Ok(false),
     }
 }

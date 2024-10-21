@@ -7,9 +7,9 @@ create table user_role_permission_relations
             primary key,
     user_role_id       int                            not null,
     user_permission_id int                            not null,
-    created_at         time default current_timestamp not null,
-    updated_at         time,
-    deleted_at         time,
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp,
     foreign key (user_role_id) references user_roles (id),
     foreign key (user_permission_id) references user_permissions (id)
 );

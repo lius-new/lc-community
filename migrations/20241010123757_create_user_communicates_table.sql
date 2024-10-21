@@ -5,9 +5,9 @@ create table user_communicates
     id           serial
         constraint user_communicates_pk
             primary key,
-    created_at   time default current_timestamp not null,
-    updated_at   time,
-    deleted_at   time,
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp,
     uuid         varchar(64)                    not null,
     current_uuid varchar(64)                    not null,
     foreign key (uuid) references users (uuid),

@@ -8,9 +8,9 @@ create table article_comments
     article_id        int                            not null,
     parent_comment_id int,
     content           varchar(256)                   not null,
-    created_at        time default current_timestamp not null,
-    updated_at        time,
-    deleted_at        time,
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp,
     foreign key (parent_comment_id) references article_comments (id),
     foreign key (article_id) references articles (id)
 );

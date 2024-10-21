@@ -7,9 +7,9 @@ create table article_groups
             primary key,
     name        varchar(24)                    not null,
     description varchar(256)                   not null,
-    created_at  time default current_timestamp not null,
-    updated_at  time,
-    deleted_at  time
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp
 );
 comment on table article_groups is '社区分组表';
 comment on column article_groups.name is '分组名称';

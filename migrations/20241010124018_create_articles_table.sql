@@ -9,9 +9,9 @@ create table articles
     description varchar(256)                   not null,
     content     varchar                        not null,
     hash        varchar(128)                   not null,
-    created_at  time default current_timestamp not null,
-    updated_at  time,
-    deleted_at  time
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp 
 );
 comment on table articles is '文章表';
 comment on column articles.title is '文章标题';

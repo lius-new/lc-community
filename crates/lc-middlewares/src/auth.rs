@@ -14,6 +14,20 @@ pub struct CurrentUser {
 
 /// 权限中间件
 pub async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> {
+    // 判断该资源是否在白名单中。
+    let resource = req
+        .extensions()
+        .get::<MatchedPath>()
+        .map_or_else(|| req.uri().path(), |path| path.as_str());
+    let resource_method = req.method().as_str();
+
+    // 判断是否在白名单，如果在就直接跳过权限校验。
+    if let Ok(exist) = lc_services::is_white_resource(resource, resource_method).await {
+        if exist {
+            return Ok(next.run(req).await);
+        }
+    }
+
     // 获取token
     let auth_header = req
         .headers()
@@ -40,15 +54,6 @@ pub async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> 
         }
         Err(_) => return Err(StatusCode::UNAUTHORIZED),
     };
-
-    let resource = req
-        .extensions()
-        .get::<MatchedPath>()
-        .map_or_else(|| req.uri().path(), |path| path.as_str());
-
-    let resource_method = req.method().as_str();
-
-    println!("{}, {}, {}", uuid, resource, resource_method);
 
     // 进行权限校验，只有用户存在该资源才有权进行访问。
     if let Ok(exist) = lc_services::auth(&uuid, resource, resource_method).await {

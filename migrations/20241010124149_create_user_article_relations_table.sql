@@ -7,9 +7,9 @@ create table user_article_relations
             primary key,
     uuid       varchar(64)                    not null,
     article_id int                            not null,
-    created_at time default current_timestamp not null,
-    updated_at time,
-    deleted_at time,
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp,
     foreign key (uuid) references users (uuid),
     foreign key (article_id) references articles (id)
 );

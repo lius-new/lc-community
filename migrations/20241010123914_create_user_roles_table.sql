@@ -8,9 +8,9 @@ create table user_roles
     name           varchar(52)                    not null,
     description    varchar(256)                   not null,
     parent_role_id int                            ,
-    created_at     time default current_timestamp not null,
-    updated_at     time,
-    deleted_at     time,
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp,
     foreign key (parent_role_id) references user_roles (id),
     constraint id_parent_group_id_different check ( user_roles.id != user_roles.parent_role_id )
 );

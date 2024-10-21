@@ -7,9 +7,9 @@ create table article_images
             primary key,
     hash       varchar(128)                   not null,
     path       varchar(256)                   not null,
-    created_at time default current_timestamp not null,
-    updated_at time,
-    deleted_at time,
+    created_at timestamp with time zone default now() not null,
+    updated_at timestamp,
+    deleted_at timestamp,
     article_id int                            not null,
     foreign key (article_id) references articles (id)
 );

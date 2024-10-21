@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, Router};
+use axum::{http::StatusCode, middleware, Router};
 
 async fn not_found() -> (StatusCode, &'static str) {
     (StatusCode::NOT_FOUND, "not found")
@@ -11,6 +11,7 @@ pub fn build_api_root_router() -> Router {
                 .merge(users::build_api_users_router())
                 .merge(articles::build_api_articles_router()),
         )
+        .route_layer(middleware::from_fn(lc_middlewares::auth::auth))
         .fallback(not_found)
 }
 
