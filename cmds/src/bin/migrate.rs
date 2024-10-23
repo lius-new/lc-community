@@ -32,7 +32,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     m.run(pool.get().await).await.unwrap();
 
-    println!("{}", lc_utils::uuid());
-
     Ok(())
 }

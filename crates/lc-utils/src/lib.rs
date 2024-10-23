@@ -6,6 +6,7 @@ use argon2::{
 use hmac::{Hmac, Mac};
 use jwt::{Header, RegisteredClaims, SignWithKey, Token, VerifyWithKey};
 use lazy_static::lazy_static;
+
 use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey};
 use sha2::Sha256;
 use std::time::{self};
@@ -66,7 +67,7 @@ pub fn sign_with_value(v: &str) -> Result<String> {
         .unwrap()
         .as_millis();
 
-    let encrypt_uuid = encrypt_uuid(v, &RSA_KEY_WITH_UUID.1)?;
+    let encrypt_uuid = encrypt_str(v, &RSA_KEY_WITH_UUID.1)?;
 
     let claims = RegisteredClaims {
         issuer: Some("your-issuer".to_string()),
@@ -107,7 +108,7 @@ pub fn verify_sign_with_token(token_str: &str) -> Result<(String, bool)> {
     }
 
     match &claims.json_web_token_id {
-        Some(encrypted_uuid) => Ok((decrypt_uuid(encrypted_uuid, &RSA_KEY_WITH_UUID.0)?, true)),
+        Some(encrypted_uuid) => Ok((decrypt_str(encrypted_uuid, &RSA_KEY_WITH_UUID.0)?, true)),
         _ => Ok(("".to_string(), false)),
     }
 }
@@ -123,14 +124,14 @@ pub fn generate_rsa_keys() -> Result<(RsaPrivateKey, RsaPublicKey)> {
 }
 
 /// 对uuid进行加密
-pub fn encrypt_uuid(uuid: &str, public_key: &RsaPublicKey) -> Result<String> {
-    let encrypted = public_key.encrypt(&mut OsRng, Pkcs1v15Encrypt, uuid.as_bytes())?;
+pub fn encrypt_str(str_: &str, public_key: &RsaPublicKey) -> Result<String> {
+    let encrypted = public_key.encrypt(&mut OsRng, Pkcs1v15Encrypt, str_.as_bytes())?;
 
     Ok(base64::encode(&encrypted))
 }
 
 /// 对uuid进行解密
-pub fn decrypt_uuid(encrypted: &str, private_key: &RsaPrivateKey) -> Result<String> {
+pub fn decrypt_str(encrypted: &str, private_key: &RsaPrivateKey) -> Result<String> {
     let decrypted = private_key.decrypt(Pkcs1v15Encrypt, &base64::decode(encrypted)?)?;
 
     Ok(String::from_utf8(decrypted)?)

@@ -34,14 +34,11 @@ pub async fn login(payload: LoginRequestParam) -> Result<String> {
 
     tx.commit().await?; // 提交事务
 
-    // TODO: instant 区域代码执行慢。
-    let now = Instant::now();
     if !lc_utils::verify_password(&payload.password.as_bytes(), &user.password) {
         return Err(anyhow!("用户密码错误!"));
     }
 
     let token_str = lc_utils::sign_with_value(&user.uuid)?;
-    println!("{:?}", now.elapsed());
     Ok(token_str.to_string())
 }
 

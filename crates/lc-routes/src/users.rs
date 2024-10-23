@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use axum::{http::StatusCode, routing::post, Router};
 use lc_dto::users::{LoginRequestParam, RegisterRequestParam};
 use lc_utils::{extract::Json, response::Response};
-use tokio::time::Instant;
 
 pub fn build_api_users_router() -> axum::Router {
     Router::new().nest(
@@ -30,10 +29,7 @@ async fn login(Json(payload): Json<LoginRequestParam>) -> Response<HashMap<Strin
 }
 
 async fn register(Json(payload): Json<RegisterRequestParam>) -> Response<()> {
-    let now = Instant::now();
     let r = lc_services::users::register(payload).await;
-
-    println!("register elapsed : ({:?})", now.elapsed());
 
     match r {
         Ok(_) => Response::default().success("用户注册成功", None),

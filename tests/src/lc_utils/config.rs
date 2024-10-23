@@ -17,7 +17,7 @@ mod config_tests {
     fn test_load_simple_config() {
         let config = Config::builder()
             .add_source(config::File::with_name("../config/default"))
-            .add_source(config::Environment::with_prefix("APP"))
+            //.add_source(config::Environment::with_prefix("APP"))
             .build()
             .unwrap();
 

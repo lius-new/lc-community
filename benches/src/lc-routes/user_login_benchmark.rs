@@ -1,8 +1,17 @@
 use criterion::async_executor::FuturesExecutor;
 use criterion::{criterion_group, criterion_main, Criterion};
 
-async fn perform_login(server: &axum_test::TestServer) -> axum_test::TestResponse {
-    server.get("/login").await
+/// 测试登陆
+async fn perform_login(server: &axum_test::TestServer) -> () {
+    let response = server
+        .post("/login")
+        .json(&serde_json::json!({
+            "nickname":"abc",
+            "password":"abc",
+        }))
+        .await;
+
+    println!("{:?}", response);
 }
 
 fn benchmark_login(c: &mut Criterion) {
