@@ -6,7 +6,7 @@ create table white_resources
     id          serial
         constraint white_resources_pk
             primary key,
-    name        varchar(24)                    not null,
+    name        varchar(72)                    not null,
     description varchar(48)                    not null,
     resource    varchar(72)                    not null,
     method    varchar(12)                    not null,

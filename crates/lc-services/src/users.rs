@@ -1,8 +1,8 @@
 use anyhow::{anyhow, Context, Ok, Result};
 use lc_dto::users::{LoginRequestParam, RegisterRequestParam};
 use lc_utils::database;
-use tokio::time::Instant;
 
+/// 登陆账号
 pub async fn login(payload: LoginRequestParam) -> Result<String> {
     let pool = database::get_connection().await?;
 
@@ -42,6 +42,7 @@ pub async fn login(payload: LoginRequestParam) -> Result<String> {
     Ok(token_str.to_string())
 }
 
+/// 注册账号
 pub async fn register(payload: RegisterRequestParam) -> Result<()> {
     let pool = database::get_connection().await?;
 
@@ -65,7 +66,7 @@ pub async fn register(payload: RegisterRequestParam) -> Result<()> {
 
     sqlx::query("INSERT INTO user_group_relations(uuid, user_group_id) VALUES ($1, $2);")
         .bind(&uuid)
-        .bind(1)
+        .bind(6)
         .execute(&mut *tx)
         .await?;
 
@@ -73,15 +74,39 @@ pub async fn register(payload: RegisterRequestParam) -> Result<()> {
 
     Ok(())
 }
-pub async fn logout() -> Result<()> {
+
+/// 退出登陆
+pub async fn logout(uuid: &str) -> Result<bool> {
+    let pool = database::get_connection().await?;
+
+    let row = sqlx::query("select id from user_login_infos where uuid = $1;")
+        .bind(uuid)
+        .execute(pool)
+        .await?;
+
+    let sql_str = if row.rows_affected() > 0 {
+        "update user_login_infos set login_created_time = null, logout_created_time = now() where uuid = $1;"
+    } else {
+        "insert into user_login_infos(uuid, logout_created_time) values ($1, now());"
+    };
+
+    sqlx::query(sql_str)
+        .bind(uuid)
+        .execute(pool)
+        .await
+        .context("用户不存在")?;
+
+    Ok(true)
+}
+
+pub async fn profile(_uuid: &str) -> Result<()> {
     todo!()
 }
-pub async fn profile() -> Result<()> {
-    todo!()
-}
+
 pub async fn reset_password() -> Result<()> {
     todo!()
 }
+
 pub async fn reset_nickname() -> Result<()> {
     todo!()
 }

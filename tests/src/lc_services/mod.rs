@@ -1,3 +1,5 @@
+pub mod permissions;
+
 #[tokio::test]
 async fn test_auth() {
     let (url, max_connections) = ("postgres://lius:lsmima@127.0.0.1/lcdb", 5);

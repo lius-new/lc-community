@@ -9,8 +9,9 @@ serde = { workspace = true }
 tokio = { workspace = true }
 argon2 = { workspace = true }
 
-pbkdf2 = { version = "0.12", features = ["simple"] }
-rand_core = { version = "0.6", features = ["std"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 lc_utils = { workspace = true }
+lc_dto = { workspace = true }
 lc_services = { workspace = true }

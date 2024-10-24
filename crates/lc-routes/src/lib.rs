@@ -9,11 +9,13 @@ pub fn build_api_root_router() -> Router {
             "/api",
             Router::new()
                 .merge(users::build_api_users_router())
-                .merge(articles::build_api_articles_router()),
+                .merge(articles::build_api_articles_router())
+                .merge(permissions::build_api_permissions_router()),
         )
         .route_layer(middleware::from_fn(lc_middlewares::auth::auth))
         .fallback(not_found)
 }
 
 pub mod articles;
+pub mod permissions;
 pub mod users;

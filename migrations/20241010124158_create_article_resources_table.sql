@@ -5,9 +5,10 @@ create table article_resources
     id          serial
         constraint article_resources_pk
             primary key,
-    name        varchar(24)                    not null,
+    name        varchar(72)                    not null,
     description varchar(48)                    not null,
     resource    varchar(72)                    not null,
+    method      varchar(12)                    not null,
     can_use     bool default true,
     created_at timestamp with time zone default now() not null,
     updated_at timestamp,
