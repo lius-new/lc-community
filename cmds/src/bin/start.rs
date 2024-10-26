@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     lc_utils::database::init_db(database_url, database_max_connections).await;
 
-    let app = lc_routes::build_api_root_router();
+    let app = lc_routes::build_root_router();
     let listener = tokio::net::TcpListener::bind(server_url.as_str()).await?;
 
     tracing::info!("app server with: http://{}", server_url);

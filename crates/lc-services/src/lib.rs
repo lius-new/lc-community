@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use lc_utils::database;
 
+pub mod articles;
 pub mod permissions;
 pub mod users;
 

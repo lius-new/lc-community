@@ -5,28 +5,37 @@ use axum::{
 
 use resources::*;
 
-pub fn build_api_permissions_router() -> axum::Router {
-    Router::new().nest(
-        "/permissions",
+pub mod api_management {
+    use super::*;
+    pub fn build_router() -> Router {
+        Router::new().nest(
+            "/permissions",
+            Router::new()
+                .nest(
+                    "/resources",
+                    Router::new()
+                        .route("/show-category", post(show_resource_category))
+                        .route("/push", post(push))
+                        .route("/modify", post(modify))
+                        .route("/toggle-canuse", post(toggle_canuse))
+                        .route("/grant-permissions", post(grant_permissions))
+                        .route("/remove-permissions", post(remove_permissions))
+                        .route("/show-resources", post(show_allresources_permissions))
+                        .route("/show-current-resources", post(show_current_resources))
+                        .route("/show-permissions", post(show_current_permissions)),
+                )
+                .route(
+                    "/show-all-permissions",
+                    get(permissions::show_all_permissions),
+                ),
+        )
+    }
+}
+pub mod api {
+    use super::*;
+    pub fn build_router() -> Router {
         Router::new()
-            .nest(
-                "/resources",
-                Router::new()
-                    .route("/show-category", post(show_resource_category))
-                    .route("/push", post(push))
-                    .route("/modify", post(modify))
-                    .route("/toggle-canuse", post(toggle_canuse))
-                    .route("/grant-permissions", post(grant_permissions))
-                    .route("/remove-permissions", post(remove_permissions))
-                    .route("/show-resources", post(show_allresources_permissions))
-                    .route("/show-current-resources", post(show_current_resources))
-                    .route("/show-permissions", post(show_current_permissions)),
-            )
-            .route(
-                "/show-all-permissions",
-                get(permissions::show_all_permissions),
-            ),
-    )
+    }
 }
 
 mod permissions {

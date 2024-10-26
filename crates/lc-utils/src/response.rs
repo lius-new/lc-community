@@ -12,7 +12,7 @@ const WARN_CODE: i32 = 1;
 const FAIL_CODE: i32 = -1;
 
 /// 统一响应类型
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, Clone)]
 pub struct Response<T> {
     pub status_code: u16,
     pub code: i32,
@@ -101,3 +101,5 @@ where
         }
     }
 }
+
+
