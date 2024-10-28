@@ -2,7 +2,6 @@ use axum::{
     routing::{get, post},
     Router,
 };
-
 pub mod api_management {
     use super::*;
     pub fn build_router() -> Router {

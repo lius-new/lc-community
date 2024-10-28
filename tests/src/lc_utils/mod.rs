@@ -66,3 +66,19 @@ fn test_decrypt_uuid() {
     let value = lc_utils::decrypt_str(&encrypted, &private_key);
     println!("value: {:?} ", value,);
 }
+
+/// 测试对字符串进行hash计算
+#[test]
+fn test_hash_str() {
+    let hash_ = lc_utils::hash(b"abc");
+
+    println!("{:?}", hash_);
+}
+
+/// 测试对文件进行hash计算
+#[test]
+fn test_sha256_digest() {
+    let hash_ = lc_utils::sha256_digest(b"abc").unwrap();
+
+    println!("{}", hash_)
+}

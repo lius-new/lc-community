@@ -13,6 +13,7 @@ pub struct Service {
     /// 应用运行端口
     pub port: u32,
 }
+
 #[derive(Debug, Deserialize)]
 pub struct Database {
     /// 数据库地址
@@ -22,12 +23,20 @@ pub struct Database {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Upload {
+    /// 数据库地址
+    pub article_covers: String,
+}
+
+#[derive(Debug, Deserialize)]
 #[allow(dead_code)]
 pub struct AppConfig {
     /// 应用配置
     pub service: Service,
-    // 应用属uku配置
+    // 应用数据库配置
     pub database: Database,
+    // 应用上传配置
+    pub upload: Upload,
 }
 
 impl AppConfig {

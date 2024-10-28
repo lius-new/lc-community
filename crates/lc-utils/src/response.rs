@@ -1,5 +1,6 @@
-use anyhow::Error;
+use anyhow::{anyhow, Error};
 use axum::{
+    extract::multipart::MultipartError,
     http::StatusCode,
     response::{IntoResponse, Json},
 };
@@ -102,4 +103,11 @@ where
     }
 }
 
-
+/// 实现From<MultipartError>
+impl From<MultipartError> for Response<()> {
+    fn from(value: MultipartError) -> Self {
+        Response::default()
+            .with_status_code(value.status())
+            .fail("param not found", Some(anyhow!(value.body_text())))
+    }
+}

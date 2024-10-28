@@ -3,13 +3,19 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2, PasswordHash, PasswordVerifier,
 };
+use data_encoding::HEXUPPER;
 use hmac::{Hmac, Mac};
 use jwt::{Header, RegisteredClaims, SignWithKey, Token, VerifyWithKey};
 use lazy_static::lazy_static;
 
+use ring::digest::{Context, SHA256};
+
 use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey};
 use sha2::Sha256;
-use std::time::{self};
+use std::{
+    hash::{DefaultHasher, Hash, Hasher},
+    time::{self},
+};
 
 pub mod config;
 pub mod database;
@@ -28,6 +34,7 @@ lazy_static! {
 pub fn uuid() -> String {
     uuid::Uuid::new_v4().to_string()
 }
+
 /// 对密码进行hash
 /// params:
 ///    - password: 需要被hash加密的密码.
@@ -40,6 +47,7 @@ pub fn hash_password(password: &[u8]) -> Result<String> {
         Err(e) => Err(anyhow!("failed to hash password: {:?}", e)),
     }
 }
+
 /// 检查密码是否正确
 /// params:
 ///    - password: 需要被检查的原始密码
@@ -136,3 +144,58 @@ pub fn decrypt_str(encrypted: &str, private_key: &RsaPrivateKey) -> Result<Strin
 
     Ok(String::from_utf8(decrypted)?)
 }
+
+/// 对uuid进行解密
+pub fn hash(content: &[u8]) -> u64 {
+    let mut hasher = DefaultHasher::new();
+
+    content.hash(&mut hasher);
+
+    hasher.finish()
+}
+
+/// 计算文件hash
+pub fn sha256_digest(content: &[u8]) -> Result<String> {
+    let mut context = Context::new(&SHA256);
+
+    context.update(content);
+
+    Ok(HEXUPPER.encode(context.finish().as_ref()))
+}
+
+///// 计算文件hash
+//pub fn newpwd(password: &str) -> Result<String> {
+//    const CREDENTIAL_LEN: usize = digest::SHA512_OUTPUT_LEN;
+//
+//    let mut pbkdf2_hash = [0u8; digest::SHA512_OUTPUT_LEN];
+//
+//    let rng = rand::SystemRandom::new();
+//    let mut salt = [0u8; CREDENTIAL_LEN];
+//    rng.fill(&mut salt).unwrap();
+//
+//    pbkdf2::derive(
+//        PBKDF2_HMAC_SHA512,
+//        NonZeroU32::new(100_000).unwrap(),
+//        &salt,
+//        password.as_bytes(),
+//        &mut pbkdf2_hash,
+//    );
+//
+//    Ok(HEXUPPER.encode(&pbkdf2_hash))
+//}
+//
+//pub fn newpwd_verify(password: &str, hash: &str) -> bool {
+//    const CREDENTIAL_LEN: usize = digest::SHA512_OUTPUT_LEN;
+//    let rng = rand::SystemRandom::new();
+//    let mut salt = [0u8; CREDENTIAL_LEN];
+//    rng.fill(&mut salt).unwrap();
+//
+//    pbkdf2::verify(
+//        pbkdf2::PBKDF2_HMAC_SHA256,
+//        NonZeroU32::new(100_000).unwrap(),
+//        &salt,
+//        password.as_bytes(),
+//        hash.as_bytes(),
+//    )
+//    .is_ok()
+//}

@@ -1,7 +1,7 @@
 use lc_utils::response::Response;
 
 pub async fn create() -> Response<()> {
-    let article = lc_services::articles::article_services::view_by_hash("abc").await;
+    let article = lc_services::articles::article_groups_services::view_by_hash("abc").await;
 
     article.map_or_else(
         |e| Response::default().fail("获取文章失败", Some(e)),
@@ -10,7 +10,7 @@ pub async fn create() -> Response<()> {
 }
 
 pub async fn modify() -> Response<()> {
-    let article = lc_services::articles::article_services::view_by_hash("abc").await;
+    let article = lc_services::articles::article_groups_services::view_by_hash("abc").await;
 
     article.map_or_else(
         |e| Response::default().fail("获取文章失败", Some(e)),
@@ -19,7 +19,7 @@ pub async fn modify() -> Response<()> {
 }
 
 pub async fn delete() -> Response<()> {
-    let article = lc_services::articles::article_services::view_by_hash("abc").await;
+    let article = lc_services::articles::article_groups_services::view_by_hash("abc").await;
 
     article.map_or_else(
         |e| Response::default().fail("获取文章失败", Some(e)),
@@ -28,7 +28,7 @@ pub async fn delete() -> Response<()> {
 }
 
 pub async fn toggle_visiable() -> Response<()> {
-    let article = lc_services::articles::article_services::view_by_hash("abc").await;
+    let article = lc_services::articles::article_groups_services::view_by_hash("abc").await;
 
     article.map_or_else(
         |e| Response::default().fail("获取文章失败", Some(e)),
