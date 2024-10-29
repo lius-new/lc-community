@@ -205,13 +205,13 @@ pub mod article_services {
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
 
-        let visiable: (bool,) = sqlx::query_as("select visiable from articles where hash = '';")
+        let (visiable,): (bool,) = sqlx::query_as("select visiable from articles where hash = '';")
             .bind(hash)
             .fetch_one(&mut *tx)
             .await?;
 
         sqlx::query("update articles set visiable = $1 where hash = $2;")
-            .bind(!visiable.0)
+            .bind(!visiable)
             .bind(hash)
             .execute(&mut *tx)
             .await?;
@@ -220,7 +220,10 @@ pub mod article_services {
         Ok(())
     }
 
-    pub async fn page(page_size: i32, page_num: i32) -> Result<lc_models::articles::ArticleByPage> {
+    pub async fn view_by_page(
+        page_size: i32,
+        page_num: i32,
+    ) -> Result<lc_models::articles::ArticleByPage> {
         let pool = database::get_connection().await?;
 
         let offset = page_num * page_size;
@@ -286,16 +289,197 @@ pub mod article_services {
 
 pub mod article_groups_services {
     use super::*;
+    use lc_dto::articles::article_groups::CreateArticleGroupRequestParams;
+    use lc_models::articles::article_groups::{ArticleGroup, ArticleGroupByPage};
 
-    pub async fn view_by_hash(_hash: &str) -> Result<()> {
+    pub async fn create(payload: CreateArticleGroupRequestParams) -> Result<()> {
+        let pool = database::get_connection().await?;
+
+        sqlx::query("insert into article_groups (name, description) values ($1, $2);")
+            .bind(payload.name)
+            .bind(payload.description)
+            .execute(pool)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn modify(payload: CreateArticleGroupRequestParams) -> Result<()> {
+        let pool = database::get_connection().await?;
+
+        sqlx::query("update article_groups set name = $1, description = $2 where id = $3;")
+            .bind(payload.name)
+            .bind(payload.description)
+            .bind(payload.id)
+            .execute(pool)
+            .await?;
+
+        Ok(())
+    }
+
+    /// 删除文章组, 假删除.
+    pub async fn delete(id: i32) -> Result<()> {
+        let pool = database::get_connection().await?;
+
+        sqlx::query("update article_groups set deleted_at = now() where id = $1;")
+            .bind(id)
+            .execute(pool)
+            .await?;
+
+        Ok(())
+    }
+
+    /// 根据文章组名称来查询该文章组的信息.
+    pub async fn view(id: i32) -> Result<ArticleGroup> {
+        let pool = database::get_connection().await?;
+
+        let article_group: ArticleGroup =
+            sqlx::query_as("select name, description, visiable from article_groups where id = $1;")
+                .bind(id)
+                .fetch_one(pool)
+                .await?;
+
+        Ok(article_group)
+    }
+
+    /// 查询文章组分页。
+    pub async fn view_by_page(page_size: i32, page_num: i32) -> Result<ArticleGroupByPage> {
+        let pool = database::get_connection().await?;
+
+        let offset = page_num * page_size;
+        let article_groups: Vec<ArticleGroup> = sqlx::query_as(
+            "select name,description,visiable from article_groups limit $1 offset $2;",
+        )
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(pool)
+        .await?;
+
+        let (total,): (i32,) = sqlx::query_as("select count(id) from article_groups;")
+            .fetch_one(pool)
+            .await?;
+
+        Ok(ArticleGroupByPage {
+            article_groups,
+            total,
+        })
+    }
+
+    pub async fn toggle_visiable(id: i32) -> Result<()> {
+        let pool = database::get_connection().await?;
+
+        let mut tx = pool.begin().await?;
+
+        let (visiable,): (bool,) =
+            sqlx::query_as("select visiable from article_groups where id = $1;")
+                .bind(id)
+                .fetch_one(&mut *tx)
+                .await?;
+
+        sqlx::query("update article_groups set visiable = $1 wher id = $2;")
+            .bind(visiable)
+            .bind(id)
+            .execute(pool)
+            .await?;
+
+        tx.commit().await?;
         Ok(())
     }
 }
 
 pub mod article_tags_services {
     use super::*;
+    use lc_dto::articles::article_tags::CreateArticleTagRequestParams;
+    use lc_models::articles::article_tags::{ArticleTag, ArticleTagByPage};
 
-    pub async fn view_by_hash(_hash: &str) -> Result<()> {
+    pub async fn create(payload: CreateArticleTagRequestParams) -> Result<()> {
+        let pool = database::get_connection().await?;
+
+        sqlx::query("insert into article_groups (name, description) values ($1, $2);")
+            .bind(payload.name)
+            .bind(payload.description)
+            .execute(pool)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn modify(payload: CreateArticleTagRequestParams) -> Result<()> {
+        let pool = database::get_connection().await?;
+
+        sqlx::query("update article_tags set name = $1, description = $2 where id = $3;")
+            .bind(payload.name)
+            .bind(payload.description)
+            .bind(payload.id)
+            .execute(pool)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn delete(id: i32) -> Result<()> {
+        let pool = database::get_connection().await?;
+
+        sqlx::query("update article_tags set deleted_at = now() where id = $1;")
+            .bind(id)
+            .execute(pool)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn view(id: i32) -> Result<ArticleTag> {
+        let pool = database::get_connection().await?;
+
+        let article_tag: ArticleTag =
+            sqlx::query_as("select name, description, visiable from article_tags where id = $1;")
+                .bind(id)
+                .fetch_one(pool)
+                .await?;
+
+        Ok(article_tag)
+    }
+
+    pub async fn view_by_page(page_size: i32, page_num: i32) -> Result<ArticleTagByPage> {
+        let pool = database::get_connection().await?;
+
+        let offset = page_num * page_size;
+        let article_tags: Vec<ArticleTag> = sqlx::query_as(
+            "select name,description,visiable from article_tags limit $1 offset $2;",
+        )
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(pool)
+        .await?;
+
+        let (total,): (i32,) = sqlx::query_as("select count(id) from article_tags;")
+            .fetch_one(pool)
+            .await?;
+
+        Ok(ArticleTagByPage {
+            article_tags,
+            total,
+        })
+    }
+
+    pub async fn toggle_visiable(id: i32) -> Result<()> {
+        let pool = database::get_connection().await?;
+
+        let mut tx = pool.begin().await?;
+
+        let (visiable,): (bool,) =
+            sqlx::query_as("select visiable from article_groups where id = $1;")
+                .bind(id)
+                .fetch_one(&mut *tx)
+                .await?;
+
+        sqlx::query("update article_tags set visiable = $1 where id = $1;")
+            .bind(visiable)
+            .bind(id)
+            .execute(pool)
+            .await?;
+
+        tx.commit().await?;
         Ok(())
     }
 }

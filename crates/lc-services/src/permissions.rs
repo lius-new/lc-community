@@ -1,4 +1,4 @@
-use anyhow::{Ok, Result};
+use anyhow::Result;
 use lc_dto::permissions;
 use lc_models::permissions::{Permissions, ResourcePermission};
 use lc_utils::database;

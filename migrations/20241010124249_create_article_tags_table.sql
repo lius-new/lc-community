@@ -5,11 +5,12 @@ create table article_tags
     id          serial
         constraint article_tags_pk
             primary key,
-    name        varchar(24)                    not null,
+    name        varchar(24) unique             not null,
     description varchar(256)                   not null,
+    visiable    boolean  default true          not null,
     created_at timestamp with time zone default now() not null,
     updated_at timestamp,
-    deleted_at timestamp 
+    deleted_at timestamp
 );
 comment on table article_tags is '文章标签表';
 comment on column article_tags.name is '文章标签名称';

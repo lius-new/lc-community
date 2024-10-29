@@ -5,8 +5,9 @@ create table article_groups
     id          serial
         constraint article_groups_pk
             primary key,
-    name        varchar(24)                    not null,
+    name        varchar(24) unique             not null,
     description varchar(256)                   not null,
+    visiable    boolean  default true          not null,
     created_at timestamp with time zone default now() not null,
     updated_at timestamp,
     deleted_at timestamp

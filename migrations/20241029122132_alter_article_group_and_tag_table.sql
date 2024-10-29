@@ -1,0 +1,14 @@
+-- Add migration script here
+
+-- 更新文章, tag和group表结构
+-- alter table article_groups add column visiable boolean not null default true;
+-- comment on column article_groups.visiable is '文章分组可见性';
+-- 
+-- alter table article_tags add column visiable boolean not null default true;
+-- comment on column article_tags.visiable is '文章标签可见性';
+-- 
+-- -- 添加两个表的name字段为唯一约束(唯一索引)
+-- alter table article_groups add constraint article_groups_name_uk unique (name);
+-- alter table article_tags add constraint article_tags_name_uk unique (name);
+-- 
+-- INFO: 这个文件的alter sql已经写入到create sql文件中。

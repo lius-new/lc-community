@@ -150,7 +150,7 @@ pub async fn page(
     Json(payload): Json<lc_dto::articles::ArticlePageRequestParams>,
 ) -> Response<lc_models::articles::ArticleByPage> {
     let article =
-        lc_services::articles::article_services::page(payload.page_num, payload.page_size).await;
+        lc_services::articles::article_services::view_by_page(payload.page_num, payload.page_size).await;
 
     article.map_or_else(
         |e| Response::default().fail("查看文章失败", Some(e)),
