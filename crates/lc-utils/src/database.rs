@@ -1,4 +1,4 @@
-use crate::errors::AppError;
+use crate::errors::DatabaseError;
 use anyhow::Result;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::sync::Arc;
@@ -20,7 +20,7 @@ pub async fn init_db(url: &str, max_connections: u32) -> &'static Arc<Database> 
 pub async fn get_connection() -> Result<&'static Pool<Postgres>> {
     match DB.get() {
         Some(db) => Ok(db.get().await),
-        None => Err(AppError::from("get connect failed !").into()),
+        None => Err(DatabaseError::ConnectionFailed.into()),
     }
 }
 

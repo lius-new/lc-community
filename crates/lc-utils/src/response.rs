@@ -34,6 +34,7 @@ where
             message: "".to_string(),
         }
     }
+
     /// 操作成功对应的响应类型
     pub fn success(mut self, message: &str, data: Option<T>) -> Self {
         self.message = message.to_string();
@@ -41,6 +42,7 @@ where
         self.code = SUCCESS_CODE;
         self
     }
+
     /// 操作失败对应的响应类型
     pub fn fail(mut self, message: &str, err: Option<Error>) -> Self {
         let err = err.map_or("".to_string(), |e| e.to_string());
@@ -111,3 +113,5 @@ impl From<MultipartError> for Response<()> {
             .fail("param not found", Some(anyhow!(value.body_text())))
     }
 }
+
+

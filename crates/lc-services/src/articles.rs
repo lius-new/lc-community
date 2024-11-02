@@ -1,12 +1,12 @@
-use anyhow::Result;
 use axum::extract::Multipart;
 use lc_utils::database;
+use lc_utils::errors::result::Result;
 
 pub mod article_services {
     use std::path::Path;
 
-    use anyhow::anyhow;
-    use lc_utils::config::AppCon;
+    use anyhow::{anyhow, Context};
+    use lc_utils::{config::AppCon, errors};
     use tokio::{fs::File, io::AsyncWriteExt};
 
     use super::*;
@@ -37,6 +37,7 @@ pub mod article_services {
         mut multipart: Multipart,
         payload: lc_dto::articles::CreateArticleRequestParams,
     ) -> Result<()> {
+        let error_msg_prefix = "创建文章失败:";
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
 
@@ -46,16 +47,22 @@ pub mod article_services {
             .bind(payload.description)
             .bind(payload.content)
             .bind(article_hash)
-            .fetch_one(&mut *tx).await?;
+            .fetch_one(&mut *tx)
+            .await?;
 
         // 如果cover的根路径(保存cover的文件夹)不存在,就error
         let root_path = AppCon.upload.article_covers.as_str();
-        if Path::new(root_path).exists() {
-            return Err(anyhow!("abc"));
+        if !Path::new(root_path).exists() {
+            return Err(anyhow!("{} upload folder not exists!", error_msg_prefix).into());
         }
 
         // 获取文件, 并将文件保存起来.
-        if let Some(field) = multipart.next_field().await? {
+        if let Some(field) = multipart.next_field().await.map_err(|err| {
+            errors::AppError::RequestError(errors::RequestError::MatlipartParseError(format!(
+                "{:?}",
+                err
+            )))
+        })? {
             if let Some("file") = field.name() {
                 let file_name = field
                     .file_name()
@@ -63,7 +70,12 @@ pub mod article_services {
                     .to_string();
 
                 let cover_path = Path::new(root_path).join(&file_name);
-                let cover_data = field.bytes().await?;
+                let cover_data = field.bytes().await.map_err(|err| {
+                    errors::AppError::RequestError(errors::RequestError::MatlipartParseError(
+                        format!("{:?}", err),
+                    ))
+                })?;
+
                 let cover_hash = lc_utils::sha256_digest(&cover_data)?;
 
                 // 判断文件是否存在, 即查询数据库判断是否有对应的hash文件和指定位置是否存在该文件。
