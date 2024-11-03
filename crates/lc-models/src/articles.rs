@@ -22,7 +22,7 @@ pub struct Article {
 #[derive(FromRow, Debug, Deserialize, Serialize)]
 pub struct ArticleByPage {
     pub articles: Vec<Article>,
-    pub total: i32,
+    pub total: i64,
 }
 
 pub mod article_groups {
@@ -31,7 +31,7 @@ pub mod article_groups {
     /// 文章组
     #[derive(FromRow, Debug, Deserialize, Serialize)]
     pub struct ArticleGroup {
-        pub title: String,
+        pub name: String,
         pub description: String,
         pub visiable: bool,
     }
@@ -40,7 +40,7 @@ pub mod article_groups {
     #[derive(FromRow, Debug, Deserialize, Serialize)]
     pub struct ArticleGroupByPage {
         pub article_groups: Vec<ArticleGroup>,
-        pub total: i32,
+        pub total: i64,
     }
 }
 
@@ -50,7 +50,7 @@ pub mod article_tags {
     /// 文章组
     #[derive(FromRow, Debug, Deserialize, Serialize)]
     pub struct ArticleTag {
-        pub title: String,
+        pub name: String,
         pub description: String,
         pub visiable: bool,
     }
@@ -59,6 +59,6 @@ pub mod article_tags {
     #[derive(FromRow, Debug, Deserialize, Serialize)]
     pub struct ArticleTagByPage {
         pub article_tags: Vec<ArticleTag>,
-        pub total: i32,
+        pub total: i64,
     }
 }

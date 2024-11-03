@@ -33,6 +33,12 @@ pub mod article_groups {
 
     #[derive(Deserialize, Serialize, Debug)]
     pub struct CreateArticleGroupRequestParams {
+        pub name: String,
+        pub description: String,
+    }
+
+    #[derive(Deserialize, Serialize, Debug)]
+    pub struct ModifyArticleGroupRequestParams {
         pub id: i32,
         pub name: String,
         pub description: String,
@@ -50,6 +56,12 @@ pub mod article_tags {
 
     #[derive(Deserialize, Serialize, Debug)]
     pub struct CreateArticleTagRequestParams {
+        pub name: String,
+        pub description: String,
+    }
+
+    #[derive(Deserialize, Serialize, Debug)]
+    pub struct ModifyArticleTagRequestParams {
         pub id: i32,
         pub name: String,
         pub description: String,

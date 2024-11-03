@@ -31,11 +31,11 @@ pub enum RequestError {
 
 #[derive(Error, Debug)]
 pub enum DatabaseError {
-    #[error("failed to get database connection.")]
+    #[error(" failed to get database connection! ")]
     ConnectionFailed,
 
-    #[error("{0}")]
-    RowNotFound(String),
+    #[error("database failed: {0}")]
+    SqlxError(sqlx::Error),
 }
 
 impl AppError {
@@ -59,8 +59,7 @@ impl AppError {
 impl From<sqlx::Error> for AppError {
     fn from(error: sqlx::Error) -> Self {
         match error {
-            sqlx::Error::Tls(_) => AppError::DatabaseError(DatabaseError::ConnectionFailed),
-            _ => todo!(),
+            _ => AppError::DatabaseError(DatabaseError::SqlxError(error)),
         }
     }
 }

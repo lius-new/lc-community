@@ -3,7 +3,7 @@ use axum::response::Result;
 use lc_utils::{errors::AppError, extract::Json, response::Response};
 
 use lc_dto::articles::article_groups::{
-    ArticleGroupPageRequestParams, CreateArticleGroupRequestParams,
+    ArticleGroupPageRequestParams, CreateArticleGroupRequestParams, ModifyArticleGroupRequestParams,
 };
 use lc_models::articles::article_groups::{ArticleGroup, ArticleGroupByPage};
 
@@ -16,7 +16,7 @@ pub async fn create(
 }
 
 pub async fn modify(
-    Json(payload): Json<CreateArticleGroupRequestParams>,
+    Json(payload): Json<ModifyArticleGroupRequestParams>,
 ) -> Result<Response<()>, AppError> {
     lc_services::articles::article_groups_services::modify(payload).await?;
 

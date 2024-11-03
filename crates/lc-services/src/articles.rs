@@ -1,16 +1,19 @@
 use axum::extract::Multipart;
 use lc_utils::database;
 use lc_utils::errors::result::Result;
+use lc_utils::errors::AppError;
 
+/// 文章的相关方法
 pub mod article_services {
     use std::path::Path;
 
-    use anyhow::{anyhow, Context};
+    use anyhow::anyhow;
     use lc_utils::{config::AppCon, errors};
     use tokio::{fs::File, io::AsyncWriteExt};
 
     use super::*;
 
+    /// 根据hash查询指定文章
     pub async fn view_by_hash(hash: &str) -> Result<lc_models::articles::ArticleDetail> {
         let pool = database::get_connection().await?;
 
@@ -33,6 +36,11 @@ pub mod article_services {
         Ok(article)
     }
 
+    /// 创建文章
+    ///
+    /// params:
+    /// - mut multipart: post+form-multipart时封装的参数对象，传入进来主要用于获取上传文件(cover图片).
+    /// - payload: 文章的各项数据
     pub async fn create(
         mut multipart: Multipart,
         payload: lc_dto::articles::CreateArticleRequestParams,
@@ -141,6 +149,12 @@ pub mod article_services {
         Ok(())
     }
 
+    /// 更新文章
+    ///
+    /// params:
+    /// - payload: 文章的各项数据
+    ///
+    /// TODO: mut multipart 参数未定义
     pub async fn modify(payload: lc_dto::articles::ModifyArticleRequestParams) -> Result<()> {
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
@@ -158,12 +172,13 @@ pub mod article_services {
         }
 
         // 更新title, description, content, hash数据。
-        let (article_id,): (i32,) =
-            sqlx::query_as("update articles set $1 where hash = $2 returning id;")
-                .bind(set_sql.join(","))
-                .bind(payload.hash)
-                .fetch_one(&mut *tx)
-                .await?;
+        let (article_id,): (i32,) = sqlx::query_as(
+            "update articles set $1, updated_at = now() where hash = $2 returning id;",
+        )
+        .bind(set_sql.join(","))
+        .bind(payload.hash)
+        .fetch_one(&mut *tx)
+        .await?;
 
         // tag 与 article关联表。
         for tag_id in payload.tags {
@@ -189,6 +204,7 @@ pub mod article_services {
         Ok(())
     }
 
+    /// 根据hash删除文章
     pub async fn delete_by_hash(hash: &str) -> Result<()> {
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
@@ -213,6 +229,7 @@ pub mod article_services {
         Ok(())
     }
 
+    /// 根据hash修改文章可见性
     pub async fn toggle_visiable(hash: &str) -> Result<()> {
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
@@ -222,7 +239,7 @@ pub mod article_services {
             .fetch_one(&mut *tx)
             .await?;
 
-        sqlx::query("update articles set visiable = $1 where hash = $2;")
+        sqlx::query("update articles set visiable = $1, updated_at = now() where hash = $2;")
             .bind(!visiable)
             .bind(hash)
             .execute(&mut *tx)
@@ -232,13 +249,23 @@ pub mod article_services {
         Ok(())
     }
 
+    /// 分页查询
     pub async fn view_by_page(
         page_size: i32,
-        page_num: i32,
+        mut page_num: i32,
     ) -> Result<lc_models::articles::ArticleByPage> {
         let pool = database::get_connection().await?;
 
+        let (total,): (i64,) = sqlx::query_as("select count(id) from articles;")
+            .fetch_one(pool)
+            .await?;
+
+        // 如果page_num小于0,或者数据量超过total那么就设置page_num = 0
+        if page_num < 0 || ((page_num * page_size) as i64) > total {
+            page_num = 0;
+        }
         let offset = page_num * page_size;
+
         let articles: Vec<lc_models::articles::Article> = sqlx::query_as(
             "select title, description from articles order by created_at,updated_at limit $1 offset $2;",
         )
@@ -247,20 +274,29 @@ pub mod article_services {
         .fetch_all(pool)
         .await?;
 
-        let (total,): (i32,) = sqlx::query_as("select count(id) from articles;")
-            .fetch_one(pool)
-            .await?;
-
         Ok(lc_models::articles::ArticleByPage { articles, total })
     }
 
+    /// 分页查询(热门)
+    ///
+    /// TODO:需要建立新表来记录访问量从而实现该方法。
     pub async fn toplist(
         page_size: i32,
-        page_num: i32,
+        mut page_num: i32,
     ) -> Result<lc_models::articles::ArticleByPage> {
         let pool = database::get_connection().await?;
 
+        let (total,): (i64,) = sqlx::query_as("select count(id) from articles;")
+            .fetch_one(pool)
+            .await?;
+
+        // 如果page_num小于0,或者数据量超过total那么就设置page_num = 0
+        if page_num < 0 || ((page_num * page_size) as i64) > total {
+            page_num = 0;
+        }
+
         let offset = page_num * page_size;
+
         let articles: Vec<lc_models::articles::Article> = sqlx::query_as(
             "select title, description from articles order by created_at,updated_at limit $1 offset $2;",
         )
@@ -268,19 +304,27 @@ pub mod article_services {
             .bind(offset)
         .fetch_all(pool)
         .await?;
-
-        let (total,): (i32,) = sqlx::query_as("select count(id) from articles;")
-            .fetch_one(pool)
-            .await?;
 
         Ok(lc_models::articles::ArticleByPage { articles, total })
     }
 
+    /// 分页查询(随机)
+    ///
+    /// TODO:需要建立新表来记录每个用户访问量, 从而实现为每个用户随机推送类似文章。
     pub async fn random(
         page_size: i32,
-        page_num: i32,
+        mut page_num: i32,
     ) -> Result<lc_models::articles::ArticleByPage> {
         let pool = database::get_connection().await?;
+
+        let (total,): (i64,) = sqlx::query_as("select count(id) from articles;")
+            .fetch_one(pool)
+            .await?;
+
+        // 如果page_num小于0,或者数据量超过total那么就设置page_num = 0
+        if page_num < 0 || ((page_num * page_size) as i64) > total {
+            page_num = 0;
+        }
 
         let offset = page_num * page_size;
         let articles: Vec<lc_models::articles::Article> = sqlx::query_as(
@@ -290,10 +334,6 @@ pub mod article_services {
             .bind(offset)
         .fetch_all(pool)
         .await?;
-
-        let (total,): (i32,) = sqlx::query_as("select count(id) from articles;")
-            .fetch_one(pool)
-            .await?;
 
         Ok(lc_models::articles::ArticleByPage { articles, total })
     }
@@ -301,9 +341,12 @@ pub mod article_services {
 
 pub mod article_groups_services {
     use super::*;
-    use lc_dto::articles::article_groups::CreateArticleGroupRequestParams;
+    use lc_dto::articles::article_groups::{
+        CreateArticleGroupRequestParams, ModifyArticleGroupRequestParams,
+    };
     use lc_models::articles::article_groups::{ArticleGroup, ArticleGroupByPage};
 
+    /// 创建文章分组
     pub async fn create(payload: CreateArticleGroupRequestParams) -> Result<()> {
         let pool = database::get_connection().await?;
 
@@ -311,15 +354,17 @@ pub mod article_groups_services {
             .bind(payload.name)
             .bind(payload.description)
             .execute(pool)
-            .await?;
+            .await
+            .map_err(|_| AppError::CustomerError("创建文章分组失败: 分组名已存在.".to_string()))?;
 
         Ok(())
     }
 
-    pub async fn modify(payload: CreateArticleGroupRequestParams) -> Result<()> {
+    /// 更新文章分组
+    pub async fn modify(payload: ModifyArticleGroupRequestParams) -> Result<()> {
         let pool = database::get_connection().await?;
 
-        sqlx::query("update article_groups set name = $1, description = $2 where id = $3;")
+        sqlx::query("update article_groups set name = $1, description = $2, updated_at = now() where id = $3;")
             .bind(payload.name)
             .bind(payload.description)
             .bind(payload.id)
@@ -355,8 +400,17 @@ pub mod article_groups_services {
     }
 
     /// 查询文章组分页。
-    pub async fn view_by_page(page_size: i32, page_num: i32) -> Result<ArticleGroupByPage> {
+    pub async fn view_by_page(page_size: i32, mut page_num: i32) -> Result<ArticleGroupByPage> {
         let pool = database::get_connection().await?;
+
+        let (total,): (i64,) = sqlx::query_as("select count(id) from articles;")
+            .fetch_one(pool)
+            .await?;
+
+        // 如果page_num小于0,或者数据量超过total那么就设置page_num = 0
+        if page_num < 0 || ((page_num * page_size) as i64) > total {
+            page_num = 0;
+        }
 
         let offset = page_num * page_size;
         let article_groups: Vec<ArticleGroup> = sqlx::query_as(
@@ -367,16 +421,13 @@ pub mod article_groups_services {
         .fetch_all(pool)
         .await?;
 
-        let (total,): (i32,) = sqlx::query_as("select count(id) from article_groups;")
-            .fetch_one(pool)
-            .await?;
-
         Ok(ArticleGroupByPage {
             article_groups,
             total,
         })
     }
 
+    /// 修改分组的可见性
     pub async fn toggle_visiable(id: i32) -> Result<()> {
         let pool = database::get_connection().await?;
 
@@ -388,8 +439,8 @@ pub mod article_groups_services {
                 .fetch_one(&mut *tx)
                 .await?;
 
-        sqlx::query("update article_groups set visiable = $1 wher id = $2;")
-            .bind(visiable)
+        sqlx::query("update article_groups set visiable = $1, updated_at = now() where id = $2;")
+            .bind(!visiable)
             .bind(id)
             .execute(pool)
             .await?;
@@ -401,25 +452,30 @@ pub mod article_groups_services {
 
 pub mod article_tags_services {
     use super::*;
-    use lc_dto::articles::article_tags::CreateArticleTagRequestParams;
+    use lc_dto::articles::article_tags::{
+        CreateArticleTagRequestParams, ModifyArticleTagRequestParams,
+    };
     use lc_models::articles::article_tags::{ArticleTag, ArticleTagByPage};
 
+    /// 创建文章标签
     pub async fn create(payload: CreateArticleTagRequestParams) -> Result<()> {
         let pool = database::get_connection().await?;
 
-        sqlx::query("insert into article_groups (name, description) values ($1, $2);")
+        sqlx::query("insert into article_tags (name, description) values ($1, $2);")
             .bind(payload.name)
             .bind(payload.description)
             .execute(pool)
-            .await?;
+            .await
+            .map_err(|_| AppError::CustomerError("创建标签失败: 标签名已存在.".to_string()))?;
 
         Ok(())
     }
 
-    pub async fn modify(payload: CreateArticleTagRequestParams) -> Result<()> {
+    /// 更新文章标签
+    pub async fn modify(payload: ModifyArticleTagRequestParams) -> Result<()> {
         let pool = database::get_connection().await?;
 
-        sqlx::query("update article_tags set name = $1, description = $2 where id = $3;")
+        sqlx::query("update article_tags set name = $1, description = $2, updated_at = now() where id = $3;")
             .bind(payload.name)
             .bind(payload.description)
             .bind(payload.id)
@@ -429,6 +485,7 @@ pub mod article_tags_services {
         Ok(())
     }
 
+    /// 删除稳扎给标签
     pub async fn delete(id: i32) -> Result<()> {
         let pool = database::get_connection().await?;
 
@@ -440,6 +497,7 @@ pub mod article_tags_services {
         Ok(())
     }
 
+    /// 查看文章标签
     pub async fn view(id: i32) -> Result<ArticleTag> {
         let pool = database::get_connection().await?;
 
@@ -452,8 +510,18 @@ pub mod article_tags_services {
         Ok(article_tag)
     }
 
-    pub async fn view_by_page(page_size: i32, page_num: i32) -> Result<ArticleTagByPage> {
+    /// 分页查看文章标签
+    pub async fn view_by_page(page_size: i32, mut page_num: i32) -> Result<ArticleTagByPage> {
         let pool = database::get_connection().await?;
+
+        let (total,): (i64,) = sqlx::query_as("select count(id) from articles;")
+            .fetch_one(pool)
+            .await?;
+
+        // 如果page_num小于0,或者数据量超过total那么就设置page_num = 0
+        if page_num < 0 || ((page_num * page_size) as i64) > total {
+            page_num = 0;
+        }
 
         let offset = page_num * page_size;
         let article_tags: Vec<ArticleTag> = sqlx::query_as(
@@ -464,29 +532,26 @@ pub mod article_tags_services {
         .fetch_all(pool)
         .await?;
 
-        let (total,): (i32,) = sqlx::query_as("select count(id) from article_tags;")
-            .fetch_one(pool)
-            .await?;
-
         Ok(ArticleTagByPage {
             article_tags,
             total,
         })
     }
 
+    /// 修改标签的可见性
     pub async fn toggle_visiable(id: i32) -> Result<()> {
         let pool = database::get_connection().await?;
 
         let mut tx = pool.begin().await?;
 
         let (visiable,): (bool,) =
-            sqlx::query_as("select visiable from article_groups where id = $1;")
+            sqlx::query_as("select visiable from article_tags where id = $1;")
                 .bind(id)
                 .fetch_one(&mut *tx)
                 .await?;
 
-        sqlx::query("update article_tags set visiable = $1 where id = $1;")
-            .bind(visiable)
+        sqlx::query("update article_tags set visiable = $1, updated_at = now() where id = $2;")
+            .bind(!visiable)
             .bind(id)
             .execute(pool)
             .await?;

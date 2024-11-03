@@ -1,5 +1,7 @@
 use axum::{extract::Path, response::Result};
-use lc_dto::articles::article_tags::{ArticleTagPageRequestParams, CreateArticleTagRequestParams};
+use lc_dto::articles::article_tags::{
+    ArticleTagPageRequestParams, CreateArticleTagRequestParams, ModifyArticleTagRequestParams,
+};
 use lc_models::articles::article_tags::{ArticleTag, ArticleTagByPage};
 use lc_utils::{errors::AppError, extract::Json, response::Response};
 
@@ -12,7 +14,7 @@ pub async fn create(
 }
 
 pub async fn modify(
-    Json(payload): Json<CreateArticleTagRequestParams>,
+    Json(payload): Json<ModifyArticleTagRequestParams>,
 ) -> Result<Response<()>, AppError> {
     lc_services::articles::article_tags_services::modify(payload).await?;
     Ok(Response::default().success("更新文章标签成功", Some(())))

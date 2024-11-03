@@ -1,4 +1,4 @@
-use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
+use crate::commons;
 
 /// 测试显示数据库中的资源表
 #[tokio::test]
@@ -75,7 +75,7 @@ async fn test_grant_permissions_with_resources() {
     let (url, max_connections) = ("postgres://lius:lsmima@127.0.0.1/lcdb", 5);
     lc_utils::database::init_db(url, max_connections).await;
 
-    let permission_id = vec![2];
+    let _permission_id = vec![2];
     let permission_ids = vec![3, 4, 5];
 
     let _ = lc_services::permissions::grant_permissions_with_resources(
@@ -93,7 +93,7 @@ async fn test_remove_permissions_with_resources() {
     let (url, max_connections) = ("postgres://lius:lsmima@127.0.0.1/lcdb", 5);
     lc_utils::database::init_db(url, max_connections).await;
 
-    let permission_id = vec![2];
+    let _permission_id = vec![2];
     let permission_ids = vec![3, 4, 5];
 
     let _ = lc_services::permissions::remove_permissions_with_resources(
@@ -121,10 +121,7 @@ async fn test_show_all_permissions() {
 /// 测试 显示指定资源权限
 #[tokio::test]
 async fn test_show_permissions_with_current_resources() {
-    tracing_subscriber::registry().with(fmt::layer()).init();
-
-    let (url, max_connections) = ("postgres://lius:lsmima@127.0.0.1/lcdb", 5);
-    lc_utils::database::init_db(url, max_connections).await;
+    commons::setup().await;
 
     let result =
         lc_services::permissions::show_permissions_with_current_resources("GET+/api/users/logout")
