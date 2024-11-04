@@ -1,4 +1,5 @@
-use axum::response::Result;
+use axum::{extract::Path, response::Result, Extension};
+use lc_middlewares::auth;
 use lc_utils::{
     errors::{AppError, RequestError},
     extract::Json,
@@ -14,7 +15,10 @@ pub async fn view_by_hash() -> Result<Response<lc_models::articles::ArticleDetai
 
 /// 创建文章
 /// 该接口接收post + multipart请求参数
-pub async fn create(mut multipart: axum::extract::Multipart) -> Result<Response<()>, AppError> {
+pub async fn create(
+    state: Extension<auth::CurrentUser>,
+    mut multipart: axum::extract::Multipart,
+) -> Result<Response<()>, AppError> {
     let mut payload = lc_dto::articles::CreateArticleRequestParams {
         title: String::new(),
         description: String::new(),
@@ -35,11 +39,14 @@ pub async fn create(mut multipart: axum::extract::Multipart) -> Result<Response<
         }
     }
 
-    lc_services::articles::article_services::create(multipart, payload).await?;
+    lc_services::articles::article_services::create(multipart, payload, &state.uuid).await?;
     Ok(Response::default().success("创建文章成功", Some(())))
 }
 
-pub async fn modify(mut multipart: axum::extract::Multipart) -> Result<Response<()>, AppError> {
+pub async fn modify(
+    state: Extension<auth::CurrentUser>,
+    mut multipart: axum::extract::Multipart,
+) -> Result<Response<()>, AppError> {
     let mut payload = lc_dto::articles::ModifyArticleRequestParams {
         title: String::new(),
         description: String::new(),
@@ -60,17 +67,23 @@ pub async fn modify(mut multipart: axum::extract::Multipart) -> Result<Response<
             break;
         }
     }
-    lc_services::articles::article_services::modify(payload).await?;
+    lc_services::articles::article_services::modify(multipart, payload, &state.uuid).await?;
     Ok(Response::default().success("修改文章成功", Some(())))
 }
 
-pub async fn delete_by_hash() -> Result<Response<()>, AppError> {
-    lc_services::articles::article_services::delete_by_hash("abc").await?;
+pub async fn delete_by_hash(
+    state: Extension<auth::CurrentUser>,
+    Path(hash): Path<String>,
+) -> Result<Response<()>, AppError> {
+    lc_services::articles::article_services::delete_by_hash(&hash, &state.uuid).await?;
     Ok(Response::default().success("删除文章成功", Some(())))
 }
 
-pub async fn toggle_visiable() -> Result<Response<()>, AppError> {
-    lc_services::articles::article_services::toggle_visiable("abc").await?;
+pub async fn toggle_visiable(
+    state: Extension<auth::CurrentUser>,
+    Path(hash): Path<String>,
+) -> Result<Response<()>, AppError> {
+    lc_services::articles::article_services::toggle_visiable(&hash, &state.uuid).await?;
     Ok(Response::default().success("删除文章成功", Some(())))
 }
 

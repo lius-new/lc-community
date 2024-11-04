@@ -1,5 +1,3 @@
-use crate::commons;
-
 /// 测试显示数据库中的资源表
 #[tokio::test]
 async fn test_show_all_resource_type() {
@@ -121,6 +119,7 @@ async fn test_show_all_permissions() {
 /// 测试 显示指定资源权限
 #[tokio::test]
 async fn test_show_permissions_with_current_resources() {
+    use crate::commons;
     commons::setup().await;
 
     let result =

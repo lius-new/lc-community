@@ -109,7 +109,7 @@ pub async fn reset_password(uuid: &str, new_password: &str) -> Result<()> {
 
     let new_password_hash = lc_utils::hash_password(new_password.as_bytes())?;
 
-    sqlx::query("update user_infos set password = $1 where uuid = $2;")
+    sqlx::query("update user_infos set password = $1, updated_at = now() where uuid = $2;")
         .bind(new_password_hash)
         .bind(uuid)
         .execute(pool)
@@ -121,7 +121,7 @@ pub async fn reset_password(uuid: &str, new_password: &str) -> Result<()> {
 pub async fn reset_nickname(uuid: &str, nickname: &str) -> Result<()> {
     let pool = database::get_connection().await?;
 
-    sqlx::query("update user_infos set nickname = $1 where uuid = $2;")
+    sqlx::query("update user_infos set nickname = $1, updated_at = now() where uuid = $2;")
         .bind(nickname)
         .bind(uuid)
         .execute(pool)
@@ -133,7 +133,7 @@ pub async fn reset_nickname(uuid: &str, nickname: &str) -> Result<()> {
 pub async fn reset_gender(uuid: &str, gender: bool) -> Result<()> {
     let pool = database::get_connection().await?;
 
-    sqlx::query("update user_infos set gender = $1 where uuid = $2;")
+    sqlx::query("update user_infos set gender = $1, updated_at = now() where uuid = $2;")
         .bind(gender)
         .bind(uuid)
         .execute(pool)
@@ -145,7 +145,7 @@ pub async fn reset_gender(uuid: &str, gender: bool) -> Result<()> {
 pub async fn reset_phone(uuid: &str, phone: &str) -> Result<()> {
     let pool = database::get_connection().await?;
 
-    sqlx::query("update user_infos set phone = $1 where uuid = $2;")
+    sqlx::query("update user_infos set phone = $1, updated_at = now() where uuid = $2;")
         .bind(phone)
         .bind(uuid)
         .execute(pool)
@@ -156,7 +156,7 @@ pub async fn reset_phone(uuid: &str, phone: &str) -> Result<()> {
 pub async fn reset_email(uuid: &str, email: &str) -> Result<()> {
     let pool = database::get_connection().await?;
 
-    sqlx::query("update user_infos set email = $1 where uuid = $2;")
+    sqlx::query("update user_infos set email = $1, updated_at = now() where uuid = $2;")
         .bind(email)
         .bind(uuid)
         .execute(pool)

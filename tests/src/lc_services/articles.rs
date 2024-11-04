@@ -62,6 +62,48 @@ mod test_article_groups_services {
             .await
             .unwrap();
     }
+
+    #[tokio::test]
+    async fn test_delete() {
+        commons::setup().await;
+
+        lc_services::articles::article_groups_services::delete(1)
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_view() {
+        commons::setup().await;
+
+        let group = lc_services::articles::article_groups_services::view(1)
+            .await
+            .unwrap();
+
+        println!("{:?}", group)
+    }
+
+    #[tokio::test]
+    async fn test_view_by_page() {
+        commons::setup().await;
+
+        let groups = lc_services::articles::article_groups_services::view_by_page(10, 1)
+            .await
+            .unwrap();
+
+        println!("{:?}", groups)
+    }
+
+    #[tokio::test]
+    async fn test_toggle_visiable() {
+        commons::setup().await;
+
+        let groups = lc_services::articles::article_groups_services::toggle_visiable(1)
+            .await
+            .unwrap();
+
+        println!("{:?}", groups)
+    }
 }
 
 #[cfg(test)]

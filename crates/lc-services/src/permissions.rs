@@ -143,7 +143,7 @@ pub async fn push_resources(payload: permissions::PushResourcesRequestParam) -> 
 pub async fn modify_resources(payload: permissions::ModifyResourcesRequestParam) -> Result<()> {
     let pool = database::get_connection().await?;
 
-    sqlx::query("update $1 set name = $2, description = $3, resource = $4, can_use = $5, method = $6 where id = $7;")
+    sqlx::query("update $1 set name = $2, description = $3, resource = $4, can_use = $5, method = $6, updated_at = now() where id = $7;")
         .bind(payload.resource_table)
         .bind(payload.resource_name)
         .bind(payload.resource_description)
@@ -167,7 +167,7 @@ pub async fn toggle_canuse_resources(reosurce_id: i32, resource_table: &str) -> 
             .fetch_one(pool)
             .await?;
 
-    sqlx::query(format!("update {} set can_use = $1 where id = $2;", resource_table).as_ref())
+    sqlx::query(format!("update {} set can_use = $1, updated_at = now() where id = $2;", resource_table).as_ref())
         .bind(!can_use.0)
         .bind(reosurce_id)
         .execute(pool)

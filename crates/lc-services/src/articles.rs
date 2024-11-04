@@ -9,7 +9,10 @@ pub mod article_services {
 
     use anyhow::anyhow;
     use lc_utils::{config::AppCon, errors};
-    use tokio::{fs::File, io::AsyncWriteExt};
+    use tokio::{
+        fs::{self, File},
+        io::AsyncWriteExt,
+    };
 
     use super::*;
 
@@ -44,8 +47,8 @@ pub mod article_services {
     pub async fn create(
         mut multipart: Multipart,
         payload: lc_dto::articles::CreateArticleRequestParams,
+        user_uuid: &str,
     ) -> Result<()> {
-        let error_msg_prefix = "创建文章失败:";
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
 
@@ -61,11 +64,11 @@ pub mod article_services {
         // 如果cover的根路径(保存cover的文件夹)不存在,就error
         let root_path = AppCon.upload.article_covers.as_str();
         if !Path::new(root_path).exists() {
-            return Err(anyhow!("{} upload folder not exists!", error_msg_prefix).into());
+            return Err(anyhow!("创建文章失败: upload folder not exists!").into());
         }
 
         // 获取文件, 并将文件保存起来.
-        if let Some(field) = multipart.next_field().await.map_err(|err| {
+        while let Some(field) = multipart.next_field().await.map_err(|err| {
             errors::AppError::RequestError(errors::RequestError::MatlipartParseError(format!(
                 "{:?}",
                 err
@@ -145,6 +148,13 @@ pub mod article_services {
             .await?;
         }
 
+        // user与article关联表
+        sqlx::query("insert into  user_article_relations (uuid, article_id) values ($1, $2);")
+            .bind(article_id)
+            .bind(user_uuid)
+            .execute(&mut *tx)
+            .await?;
+
         tx.commit().await?;
         Ok(())
     }
@@ -152,12 +162,18 @@ pub mod article_services {
     /// 更新文章
     ///
     /// params:
+    /// - mut multipart: post+form-multipart时封装的参数对象，传入进来主要用于获取上传文件(cover图片).
     /// - payload: 文章的各项数据
     ///
-    /// TODO: mut multipart 参数未定义
-    pub async fn modify(payload: lc_dto::articles::ModifyArticleRequestParams) -> Result<()> {
+    pub async fn modify(
+        mut multipart: Multipart,
+        payload: lc_dto::articles::ModifyArticleRequestParams,
+        user_uuid: &str,
+    ) -> Result<()> {
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
+
+        // 判断文章是否为该用户所有。
 
         let mut set_sql = Vec::new();
         if !payload.title.is_empty() {
@@ -173,12 +189,99 @@ pub mod article_services {
 
         // 更新title, description, content, hash数据。
         let (article_id,): (i32,) = sqlx::query_as(
-            "update articles set $1, updated_at = now() where hash = $2 returning id;",
+            "update articles set $1, updated_at = now() from user_article_relations uars where a.id = uars.article_id and uars.uuid = $2 returning a.id and a.hash = $3;",
         )
         .bind(set_sql.join(","))
+        .bind(user_uuid)
         .bind(payload.hash)
         .fetch_one(&mut *tx)
         .await?;
+
+        let root_path = AppCon.upload.article_covers.as_str();
+        if !Path::new(root_path).exists() {
+            return Err(anyhow!("更新文章失败: upload folder not exists!").into());
+        }
+
+        while let Some(field) = multipart.next_field().await.map_err(|err| {
+            errors::AppError::RequestError(errors::RequestError::MatlipartParseError(format!(
+                "{:?}",
+                err
+            )))
+        })? {
+            if let Some("file") = field.name() {
+                // 查询更新前的cover数据。
+                let original_covers: Vec<(i32, String)> =
+                    sqlx::query_as("select id, path from article_covers where article_id = $1;")
+                        .bind(article_id)
+                        .fetch_all(&mut *tx)
+                        .await?;
+
+                // 删除赝本的original_covers.
+                // 如果删除失败那么就会终止，后面更新操作更不用执行。
+                // WARN: 并非修改deleted_at字段，而是直接删除数据。
+                for (original_cover_id, original_cover_path) in original_covers {
+                    fs::remove_file(original_cover_path).await.map_err(|err| {
+                        errors::AppError::CustomerError(format!("更新文章失败: {:?}!", err))
+                    })?;
+
+                    sqlx::query("delete from article_covers where id = $1;")
+                        .bind(original_cover_id)
+                        .execute(&mut *tx)
+                        .await?;
+                }
+
+                let file_name = field
+                    .file_name()
+                    .ok_or(anyhow!("file name not provider"))?
+                    .to_string();
+
+                let cover_path = Path::new(root_path).join(&file_name);
+                let cover_data = field.bytes().await.map_err(|err| {
+                    errors::AppError::RequestError(errors::RequestError::MatlipartParseError(
+                        format!("{:?}", err),
+                    ))
+                })?;
+
+                let cover_hash = lc_utils::sha256_digest(&cover_data)?;
+
+                // 判断文件是否存在, 即查询数据库判断是否有对应的hash文件和指定位置是否存在该文件。
+                // 查询该文件是否保存在数据库
+                let cover_exist_with_db =
+                    sqlx::query("select id from article_covers where hash = $1;")
+                        .bind(&cover_hash)
+                        .execute(&mut *tx)
+                        .await?
+                        .rows_affected()
+                        > 0;
+                // 查询该文件是否保存在服务器
+                let cover_exist_with_server = cover_path.exists();
+
+                // 保存文件到服务器的函数，方便下面的多次调用功能
+                let save = || async {
+                    let mut file = File::create(&cover_path).await?;
+                    file.write_all(&cover_data).await?;
+                    Ok::<(), anyhow::Error>(())
+                };
+
+                // 数据库和服务器都没有那么完整操作： 插入数据库和保存到服务器
+                if !cover_exist_with_db && !cover_exist_with_server {
+                    sqlx::query(
+                        "insert into article_covers(hash, path, article_id) values ($1, $2, $3);",
+                    )
+                    .bind(cover_path.to_str())
+                    .bind(&cover_hash)
+                    .bind(article_id)
+                    .execute(&mut *tx)
+                    .await?;
+
+                    save().await?;
+                }
+                // 数据库有而服务器没有：保存到服务器
+                if cover_exist_with_db && !cover_exist_with_server {
+                    save().await?;
+                }
+            }
+        }
 
         // tag 与 article关联表。
         for tag_id in payload.tags {
@@ -205,14 +308,16 @@ pub mod article_services {
     }
 
     /// 根据hash删除文章
-    pub async fn delete_by_hash(hash: &str) -> Result<()> {
+    pub async fn delete_by_hash(hash: &str, user_uuid: &str) -> Result<()> {
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
 
-        let (article_id,): (i32,) = sqlx::query_as("select id from articles where hash = $1")
-            .bind(hash)
-            .fetch_one(&mut *tx)
-            .await?;
+        let (article_id,): (i32,) =
+            sqlx::query_as("select id from articles where hash = $1 and uuid = $2")
+                .bind(hash)
+                .bind(user_uuid)
+                .fetch_one(&mut *tx)
+                .await?;
 
         sqlx::query("delete from articles where id = $1;")
             .bind(article_id)
@@ -230,14 +335,16 @@ pub mod article_services {
     }
 
     /// 根据hash修改文章可见性
-    pub async fn toggle_visiable(hash: &str) -> Result<()> {
+    pub async fn toggle_visiable(hash: &str, user_uuid: &str) -> Result<()> {
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
 
-        let (visiable,): (bool,) = sqlx::query_as("select visiable from articles where hash = '';")
-            .bind(hash)
-            .fetch_one(&mut *tx)
-            .await?;
+        let (visiable,): (bool,) =
+            sqlx::query_as("select visiable from articles where hash = $1 and uuid = $2;")
+                .bind(hash)
+                .bind(user_uuid)
+                .fetch_one(&mut *tx)
+                .await?;
 
         sqlx::query("update articles set visiable = $1, updated_at = now() where hash = $2;")
             .bind(!visiable)
