@@ -87,7 +87,7 @@ mod test_article_groups_services {
     async fn test_view_by_page() {
         commons::setup().await;
 
-        let groups = lc_services::articles::article_groups_services::view_by_page(10, 1)
+        let groups = lc_services::articles::article_groups_services::view_by_page(1, 10)
             .await
             .unwrap();
 

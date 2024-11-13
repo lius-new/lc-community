@@ -1,5 +1,5 @@
 use axum::{
-    routing::{delete, get, post, put},
+    routing::{get, post, put},
     Router,
 };
 pub mod api_management {
@@ -11,7 +11,7 @@ pub mod api_management {
                 .nest(
                     "/",
                     Router::new()
-                        .route("/:hash", post(article_handle::view_by_hash))
+                        .route("/view", post(article_handle::view_by_hash))
                         .route("/create", post(article_handle::create))
                         .route("/modify", post(article_handle::modify))
                         .route("/delete", post(article_handle::delete_by_hash))
@@ -25,7 +25,7 @@ pub mod api_management {
                     Router::new()
                         .route("/create", get(group_handle::create))
                         .route("/modify", get(group_handle::modify))
-                        .route("/delete/:id", delete(group_handle::delete))
+                        .route("/delete/:id", post(group_handle::delete))
                         .route("/toggle-visiable/:id", put(group_handle::toggle_visiable))
                         .route("/view", get(group_handle::view))
                         .route("/view-page", get(group_handle::view_by_page)),
@@ -35,7 +35,7 @@ pub mod api_management {
                     Router::new()
                         .route("/create", get(tag_handle::create))
                         .route("/modify", get(tag_handle::modify))
-                        .route("/delete/:id", delete(tag_handle::delete))
+                        .route("/delete/:id", post(tag_handle::delete))
                         .route("/toggle-visiable/:id", put(tag_handle::toggle_visiable))
                         .route("/view", get(tag_handle::view))
                         .route("/view-page", get(tag_handle::view_by_page)),

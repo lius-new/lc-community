@@ -56,6 +56,7 @@ pub async fn show_allresource_permissions(
     // 先查询到资源表格
     let resource_tables: Vec<(String,)> = show_all_resource_type().await?;
 
+    // 连接所有的资源表
     let sql_resource = resource_tables
         .iter()
         .map(|(table_name,)| {
@@ -67,16 +68,16 @@ pub async fn show_allresource_permissions(
         .collect::<Vec<String>>()
         .join(" union all ");
 
-    // 查询资源与权限关联表格。
+    // 查询所有资源权限关联表格。
     let rp_relations_tables: Vec<(String,)> = show_all_rp_type().await?;
 
+    // 连接所有资源权限关联表格。
     let sql_rp = rp_relations_tables
         .iter()
         .map(|(table_name,)| format!("select resource_id, user_permission_id,'{}' as resource_permission_relation_type  from {}", table_name, table_name))
         .collect::<Vec<String>>()
         .join(" union all ");
 
-    // 最终sql
     let mut sql = format!("
                             select up.id                   permission_id,
                                    up.name                 permission_name,
@@ -167,11 +168,17 @@ pub async fn toggle_canuse_resources(reosurce_id: i32, resource_table: &str) -> 
             .fetch_one(pool)
             .await?;
 
-    sqlx::query(format!("update {} set can_use = $1, updated_at = now() where id = $2;", resource_table).as_ref())
-        .bind(!can_use.0)
-        .bind(reosurce_id)
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        format!(
+            "update {} set can_use = $1, updated_at = now() where id = $2;",
+            resource_table
+        )
+        .as_ref(),
+    )
+    .bind(!can_use.0)
+    .bind(reosurce_id)
+    .execute(pool)
+    .await?;
 
     Ok(())
 }

@@ -22,14 +22,12 @@ where
             Ok(body) => Ok(Self(body.0)),
             Err(rejection) => {
                 let (status, message) = match rejection {
-                    JsonRejection::JsonDataError(_) => {
-                        (StatusCode::BAD_REQUEST, "param format fail")
-                    }
+                    JsonRejection::JsonDataError(_) => (StatusCode::BAD_REQUEST, "请求参数错误"),
                     JsonRejection::JsonSyntaxError(_) => {
-                        (StatusCode::BAD_REQUEST, "param syntax fail")
+                        (StatusCode::BAD_REQUEST, "请求参数语法错误")
                     }
                     JsonRejection::MissingJsonContentType(_) => {
-                        (StatusCode::BAD_REQUEST, "param not found")
+                        (StatusCode::BAD_REQUEST, "缺少请求参数")
                     }
                     _ => (StatusCode::OK, ""),
                 };

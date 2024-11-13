@@ -10,7 +10,7 @@ pub struct UserInfoWithLogin {
 
 /// 登陆账号接口中查询数据库获取到的用户信息数据对应结构体.
 #[derive(FromRow, Debug, Deserialize, Serialize)]
-pub struct UserInfoWithProfile {
+pub struct UserInfoWithView {
     pub nickname: String,
     pub email: Option<String>,
     pub gender: Option<bool>,

@@ -1,7 +1,9 @@
 use axum::{http::StatusCode, middleware, Router};
 
+/// resource is not found
+/// 第二各返回值为空，由浏览器默认内容填充就好了。
 async fn not_found() -> (StatusCode, &'static str) {
-    (StatusCode::NOT_FOUND, "not found")
+    (StatusCode::NOT_FOUND, "")
 }
 
 pub fn build_root_router() -> Router {
@@ -21,6 +23,7 @@ pub fn build_root_router() -> Router {
                 .merge(permissions::api::build_router()),
         )
         .route_layer(middleware::from_fn(lc_middlewares::auth::auth))
+        .layer(lc_middlewares::cors::cors())
         .fallback(not_found)
 }
 

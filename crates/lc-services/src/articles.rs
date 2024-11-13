@@ -168,7 +168,7 @@ pub mod article_services {
     pub async fn modify(
         mut multipart: Multipart,
         payload: lc_dto::articles::ModifyArticleRequestParams,
-        user_uuid: &str,
+        _user_uuid: &str,
     ) -> Result<()> {
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
@@ -189,10 +189,9 @@ pub mod article_services {
 
         // 更新title, description, content, hash数据。
         let (article_id,): (i32,) = sqlx::query_as(
-            "update articles set $1, updated_at = now() from user_article_relations uars where a.id = uars.article_id and uars.uuid = $2 returning a.id and a.hash = $3;",
+            "update articles set $1, updated_at = now() where hash = $3 returning id;",
         )
         .bind(set_sql.join(","))
-        .bind(user_uuid)
         .bind(payload.hash)
         .fetch_one(&mut *tx)
         .await?;
@@ -308,16 +307,14 @@ pub mod article_services {
     }
 
     /// 根据hash删除文章
-    pub async fn delete_by_hash(hash: &str, user_uuid: &str) -> Result<()> {
+    pub async fn delete_by_hash(hash: &str, _user_uuid: &str) -> Result<()> {
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
 
-        let (article_id,): (i32,) =
-            sqlx::query_as("select id from articles where hash = $1 and uuid = $2")
-                .bind(hash)
-                .bind(user_uuid)
-                .fetch_one(&mut *tx)
-                .await?;
+        let (article_id,): (i32,) = sqlx::query_as("select id from articles where hash = $1 ")
+            .bind(hash)
+            .fetch_one(&mut *tx)
+            .await?;
 
         sqlx::query("delete from articles where id = $1;")
             .bind(article_id)
@@ -335,14 +332,13 @@ pub mod article_services {
     }
 
     /// 根据hash修改文章可见性
-    pub async fn toggle_visiable(hash: &str, user_uuid: &str) -> Result<()> {
+    pub async fn toggle_visiable(hash: &str, _user_uuid: &str) -> Result<()> {
         let pool = database::get_connection().await?;
         let mut tx = pool.begin().await?;
 
         let (visiable,): (bool,) =
             sqlx::query_as("select visiable from articles where hash = $1 and uuid = $2;")
                 .bind(hash)
-                .bind(user_uuid)
                 .fetch_one(&mut *tx)
                 .await?;
 
@@ -358,8 +354,8 @@ pub mod article_services {
 
     /// 分页查询
     pub async fn view_by_page(
-        page_size: i32,
         mut page_num: i32,
+        page_size: i32,
     ) -> Result<lc_models::articles::ArticleByPage> {
         let pool = database::get_connection().await?;
 
@@ -367,9 +363,9 @@ pub mod article_services {
             .fetch_one(pool)
             .await?;
 
-        // 如果page_num小于0,或者数据量超过total那么就设置page_num = 0
-        if page_num < 0 || ((page_num * page_size) as i64) > total {
-            page_num = 0;
+        // 判断page_num是否小于0或超过总数, 如果成立则设置为0
+        if page_num <= 0 || ((page_num * page_size) as i64) > total {
+            page_num = 0
         }
         let offset = page_num * page_size;
 
@@ -507,7 +503,7 @@ pub mod article_groups_services {
     }
 
     /// 查询文章组分页。
-    pub async fn view_by_page(page_size: i32, mut page_num: i32) -> Result<ArticleGroupByPage> {
+    pub async fn view_by_page(mut page_num: i32, page_size: i32) -> Result<ArticleGroupByPage> {
         let pool = database::get_connection().await?;
 
         let (total,): (i64,) = sqlx::query_as("select count(id) from articles;")
@@ -618,7 +614,7 @@ pub mod article_tags_services {
     }
 
     /// 分页查看文章标签
-    pub async fn view_by_page(page_size: i32, mut page_num: i32) -> Result<ArticleTagByPage> {
+    pub async fn view_by_page(mut page_num: i32, page_size: i32) -> Result<ArticleTagByPage> {
         let pool = database::get_connection().await?;
 
         let (total,): (i64,) = sqlx::query_as("select count(id) from articles;")

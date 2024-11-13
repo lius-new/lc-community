@@ -1,4 +1,4 @@
-use axum::{extract::Path, response::Result, Extension};
+use axum::{response::Result, Extension};
 use lc_middlewares::auth;
 use lc_utils::{
     errors::{AppError, RequestError},
@@ -6,10 +6,12 @@ use lc_utils::{
     response::Response,
 };
 
-pub async fn view_by_hash() -> Result<Response<lc_models::articles::ArticleDetail>, AppError> {
+pub async fn view_by_hash(
+    Json(payload): Json<lc_dto::articles::ArticleByHashRequestParams>,
+) -> Result<Response<lc_models::articles::ArticleDetail>, AppError> {
     Ok(Response::default().success(
         "获取文章成功",
-        Some(lc_services::articles::article_services::view_by_hash("abc").await?),
+        Some(lc_services::articles::article_services::view_by_hash(&payload.hash).await?),
     ))
 }
 
@@ -73,22 +75,22 @@ pub async fn modify(
 
 pub async fn delete_by_hash(
     state: Extension<auth::CurrentUser>,
-    Path(hash): Path<String>,
+    Json(payload): Json<lc_dto::articles::ArticleByHashRequestParams>,
 ) -> Result<Response<()>, AppError> {
-    lc_services::articles::article_services::delete_by_hash(&hash, &state.uuid).await?;
+    lc_services::articles::article_services::delete_by_hash(&payload.hash, &state.uuid).await?;
     Ok(Response::default().success("删除文章成功", Some(())))
 }
 
 pub async fn toggle_visiable(
     state: Extension<auth::CurrentUser>,
-    Path(hash): Path<String>,
+    Json(payload): Json<lc_dto::articles::ArticleByHashRequestParams>,
 ) -> Result<Response<()>, AppError> {
-    lc_services::articles::article_services::toggle_visiable(&hash, &state.uuid).await?;
+    lc_services::articles::article_services::toggle_visiable(&payload.hash, &state.uuid).await?;
     Ok(Response::default().success("删除文章成功", Some(())))
 }
 
 pub async fn page(
-    Json(payload): Json<lc_dto::articles::ArticlePageRequestParams>,
+    Json(payload): Json<lc_dto::PageRequestParams>,
 ) -> Result<Response<lc_models::articles::ArticleByPage>, AppError> {
     Ok(Response::default().success(
         "查看文章成功",
@@ -103,7 +105,7 @@ pub async fn page(
 }
 
 pub async fn toplist(
-    Json(payload): Json<lc_dto::articles::ArticlePageRequestParams>,
+    Json(payload): Json<lc_dto::PageRequestParams>,
 ) -> Result<Response<lc_models::articles::ArticleByPage>, AppError> {
     Ok(Response::default().success(
         "查看文章成功",
@@ -115,7 +117,7 @@ pub async fn toplist(
 }
 
 pub async fn random(
-    Json(payload): Json<lc_dto::articles::ArticlePageRequestParams>,
+    Json(payload): Json<lc_dto::PageRequestParams>,
 ) -> Result<Response<lc_models::articles::ArticleByPage>, AppError> {
     Ok(Response::default().success(
         "查看文章成功",

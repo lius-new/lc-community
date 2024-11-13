@@ -82,7 +82,7 @@ impl From<anyhow::Error> for AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
         response::Response::<()>::default()
-            .fail("", Some(anyhow!("{:?}", self)))
+            .fail("", Some(anyhow!(self.to_string())))
             .into_response()
     }
 }
